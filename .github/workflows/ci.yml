@@ -65,18 +65,18 @@ jobs:
           $env:MONO_CUT_FFMPEG = "$PWD/src-tauri/resources/media/ffmpeg.exe"
           $env:MONO_CUT_FFPROBE = "$PWD/src-tauri/resources/media/ffprobe.exe"
           $env:MONO_CUT_FONT = "$PWD/src-tauri/resources/media/Inter.ttf"
-          cargo test --locked --manifest-path src-tauri/Cargo.toml -- --nocapture
+          cargo test --locked --manifest-path src-tauri/Cargo.toml -- --nocapture --test-threads=1
       - name: Open Windows WebView2 loader tests
         if: runner.os == 'Windows'
         shell: pwsh
-        run: cargo test --locked --manifest-path src-tauri/vendor/webview2-com-sys/Cargo.toml -- --nocapture
+        run: cargo test --locked --manifest-path src-tauri/vendor/webview2-com-sys/Cargo.toml -- --nocapture --test-threads=1
       - name: Unit and actual-media engine tests (Unix)
         if: runner.os != 'Windows'
         env:
           MONO_CUT_FFMPEG: ${{ github.workspace }}/src-tauri/resources/media/ffmpeg
           MONO_CUT_FFPROBE: ${{ github.workspace }}/src-tauri/resources/media/ffprobe
           MONO_CUT_FONT: ${{ github.workspace }}/src-tauri/resources/media/Inter.ttf
-        run: cargo test --locked --manifest-path src-tauri/Cargo.toml -- --nocapture
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml -- --nocapture --test-threads=1
       - name: Preserve Unix media build provenance
         if: runner.os != 'Windows' && always()
         uses: actions/upload-artifact@v4

@@ -4,6 +4,25 @@ Mono Cut 0.1 is an early desktop editor foundation. It does not claim feature
 parity with Premiere Pro or Resolve Studio. Runtime evidence belongs in
 `validation.md`; the table below describes implemented interfaces and semantics.
 
+The table describes published 0.1.1. Unreleased source adds requested-frame and
+five-second program regions; its performance and decoded-media checks are in
+[the region preview record](preview-regions.md). Unreleased source now prepares
+one successor while playing and promotes its loaded media node when ready.
+An uncovered boundary waits for the matching successor; explicit Stop or edits
+supersede that resume. See [continuity and its validation scope](preview-continuity.md).
+Native display and audible boundary behavior have not been observed in this stage.
+The source-stage Speed repair uses transactional retiming in both workspaces,
+retaining the selected source interval and linked A/V while rejecting collisions.
+Its rounding, source-relative envelopes and validation scope are documented in
+[retiming](retiming.md). It has not updated the published installer.
+Unreleased timeline waveforms now follow edited source intervals and speed in
+both workspaces, with visible-window max aggregation and live trim/slip previews.
+See [waveform timing and validation](timeline-waveforms.md); these are coarse
+source peaks before clip effects, and native gesture behavior remains unverified.
+Unreleased monitor shortcuts follow the activated Source or Program monitor in
+both modes. [Keyboard ownership](monitor-keyboard.md) documents focus, tabs,
+target reset rules, widget protection and silent source/component validation.
+
 | Capability | 0.1 status and limits |
 | --- | --- |
 | Easy mode / tutorial | Default CapCut-style workspace, first-run seven-step tooltips, restart through Help; Advanced restores dual monitors and keyframes |
@@ -28,8 +47,8 @@ retained envelopes. Explicit fade edits anchor a new ramp to the edited fragment
 See [inherited envelope semantics](split-envelopes.md) and
 [decoded-media checks](split-envelopes-validation.md).
 
-Program playback requires a completed background preview render. Preview refresh
-cost grows with sequence length and effect complexity. H.264 preview uses lossy
+Published 0.1.1 program playback requires a completed background preview render.
+Its refresh cost grows with sequence length and effect complexity. H.264 preview uses lossy
 compression and can look different from a lossless FFV1 export; both follow the
 same edit/effect graph. Audio is mixed to stereo. FFV1 export currently outputs
 8-bit YUV 4:2:0, so “lossless” refers to encoding that rendered format rather than
@@ -37,7 +56,8 @@ preserving every source color channel or bit depth.
 
 Completed previews are keyed by render inputs and filesystem stamps, with
 bounded records and active-file protection. Metadata changes preserve a correct
-loaded preview; actual edits still rebuild the complete sequence. See
+loaded preview; published 0.1.1 edits still rebuild the complete sequence. Unreleased
+source instead prepares a requested frame and five-second regions. See
 [preview reuse](preview-cache.md) and its validation record.
 
 Video display dimensions account for non-square pixel aspect ratios and 90/180/270

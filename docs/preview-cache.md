@@ -1,5 +1,10 @@
 # Program preview scheduling and reuse
 
+This document describes the published 0.1.1 complete-sequence preview. Unreleased
+source uses the same identity, cancellation and asset-protection foundation for
+[bounded region previews](preview-regions.md) and
+[prepared-region continuity](preview-continuity.md), with a different cache recipe.
+
 Program preview still renders the complete sequence to a local H.264/AAC MP4.
 This change reduces unnecessary renders and prevents obsolete results from
 replacing the current program. It does not implement incremental decoding or
@@ -26,6 +31,17 @@ Version 0.1.1 uses recipe `program-preview-v2` for the even-pixel initial
 fit correction. Its keys differ from v1, so previously rendered v1 previews
 cannot be reused with the corrected renderer. The published Windows 0.1.0
 installer retains the original v1 recipe.
+
+Unreleased source uses `program-preview-v8-regions-integer-sample-clock`. It
+retains v7's common post-gain mixing precision and fixes the sample timestamp
+reset after clip trimming. Under an explicit `1/sample_rate` timebase, `asetpts=N`
+avoids the one-sample truncation possible with divided-double `N/SR/TB`, which
+could change automated gain between bounded and full renders. V7 and earlier
+program files are rejected; source-audio, proxy and timestamp recipes are unchanged.
+Canonical `clip.retime` participates in render identity. It changes the keys for
+retimed clips. The v8 sample-clock correction also applies to legacy clips;
+previous v7 graphs and identities remain historical evidence. Retiming invalidates current and successor ownership through the
+existing revision/intent path; Stop continues to reject stale resume events.
 
 File inspection is metadata-only. Ordinary identity checks do not launch media
 children, decode footage or hash complete source files. It detects missing files
@@ -107,7 +123,7 @@ repair, including metadata/save/history reuse, source and render changes,
 proxies, concurrent requests, cancellation and quota/pin behavior.
 `src-tauri/tests/cache_retention.rs` checks aged-file protection and cleanup.
 `npm run test:preview` runs the interface projection, scheduler and asset-queue
-tests independently of React, including the production bridge with injected
+tests without launching the desktop UI, including the production bridge with injected
 native calls. These verify call ordering and delayed replies, rather than live
 desktop IPC or playback. The ignored
 `preview_benchmark.rs` measures larger synthetic workloads explicitly; it is

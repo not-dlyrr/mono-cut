@@ -940,6 +940,7 @@ pub fn prune_cache(ctx: &MediaContext, max_bytes: u64) -> Result<(), String> {
     // Preview records and outputs are one retention unit. The preview subcache
     // accounts for both; generic cleanup must not unlink a pinned output's record.
     crate::preview::prune(ctx);
+    crate::audio_clock::prune(ctx);
     let mut files = vec![];
     let mut total = 0u64;
     for entry in fs::read_dir(&ctx.cache_dir)

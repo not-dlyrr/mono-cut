@@ -2,6 +2,29 @@ use crate::model::*;
 use serde_json::Value;
 use std::collections::HashSet;
 
+fn compare(a: Rational, b: Rational) -> std::cmp::Ordering {
+    (a.num as i128 * b.den as i128).cmp(&(b.num as i128 * a.den as i128))
+}
+fn source_frames(frames: i64, fps: Rational, speed: Rational) -> Result<Rational, String> {
+    Rational::from_frames(frames, fps).checked_mul(speed)
+}
+fn timeline_frames(time: Rational, speed: Rational, fps: Rational) -> Result<i64, String> {
+    let time = time.checked_mul(Rational::new(speed.den, speed.num))?;
+    let n = time.num as i128 * fps.num as i128;
+    let d = time.den as i128 * fps.den as i128;
+    i64::try_from(n.div_euclid(d)).map_err(|_| "Retiming exceeds timeline limits".into())
+}
+fn valid_key(property: &str, value: f64) -> bool {
+    value.is_finite()
+        && match property {
+            "opacity" => (0.0..=1.0).contains(&value),
+            "volume" => (0.0..=8.0).contains(&value),
+            "scale" => (0.01..=10.).contains(&value),
+            "x" | "y" => value.abs() <= 100000.,
+            _ => false,
+        }
+}
+
 fn require(cond: bool, msg: &str) -> Result<(), String> {
     if cond {
         Ok(())
@@ -337,13 +360,15 @@ pub fn validate_clip(p: &Project, c: &Clip) -> Result<(), String> {
             (-10_000_000..=10_000_000).contains(&offset),
             "Invalid inherited render offset",
         )?;
-        require(
-            c.source_in
-                .checked_sub(Rational::from_frames(offset, p.fps).checked_mul(c.speed)?)?
-                .num
-                >= 0,
-            "Invalid inherited source origin",
-        )?;
+        if c.retime.is_none() {
+            require(
+                c.source_in
+                    .checked_sub(Rational::from_frames(offset, p.fps).checked_mul(c.speed)?)?
+                    .num
+                    >= 0,
+                "Invalid inherited source origin",
+            )?;
+        }
     }
     let mut keys = HashSet::new();
     for k in &c.keyframes {
@@ -355,14 +380,86 @@ pub fn validate_clip(p: &Project, c: &Clip) -> Result<(), String> {
             keys.insert((k.property.clone(), k.frame)),
             "Duplicate keyframe at the same frame",
         )?;
-        let valid = match k.property.as_str() {
-            "opacity" => (0.0..=1.0).contains(&k.value),
-            "volume" => (0.0..=8.0).contains(&k.value),
-            "scale" => (0.01..=10.).contains(&k.value),
-            "x" | "y" => k.value.abs() <= 100000.,
-            _ => false,
-        };
-        require(valid, "Invalid keyframe property or range")?;
+        require(
+            valid_key(&k.property, k.value),
+            "Invalid keyframe property or range",
+        )?;
+    }
+    if let Some(r) = &c.retime {
+        let m = c
+            .media_id
+            .as_ref()
+            .and_then(|id| p.media.iter().find(|m| &m.id == id))
+            .ok_or("Retiming requires video or audio media")?;
+        require(
+            m.kind != "image" && c.title.is_none(),
+            "Titles and still images do not support speed changes",
+        )?;
+        r.source_span.validate(true)?;
+        require(
+            timeline_frames(r.source_span, c.speed, p.fps)? == c.duration,
+            "Retained source span does not match clip duration",
+        )?;
+        require(
+            compare(c.source_in.checked_add(r.source_span)?, m.duration).is_le(),
+            "Retained interval extends beyond available source media",
+        )?;
+        r.render_source_origin.validate(false)?;
+        let phase = timeline_frames(
+            c.source_in.checked_sub(r.render_source_origin)?,
+            c.speed,
+            p.fps,
+        )?;
+        require(
+            r.render_source_origin.num >= 0 && (-10_000_000..=10_000_000).contains(&phase),
+            "Invalid retained source conversion origin",
+        )?;
+        if let Some(offset) = r.composition_source_offset {
+            offset.validate(false)?;
+            require(
+                c.composition.is_some(),
+                "Retained composition offset needs a composition group",
+            )?;
+        }
+        for duration in [r.envelope.fade_in, r.envelope.fade_out] {
+            duration.validate(false)?;
+            require(duration.num >= 0, "Invalid source fade duration")?;
+        }
+        r.envelope.fade_in_start.validate(false)?;
+        r.envelope.fade_out_end.validate(false)?;
+        let mut keys = HashSet::new();
+        for k in &r.envelope.keyframes {
+            k.time.validate(false)?;
+            require(
+                k.time.num >= 0
+                    && compare(k.time, r.source_span).is_le()
+                    && valid_key(&k.property, k.value),
+                "Invalid source-relative keyframe",
+            )?;
+            let normalized = Rational::new(k.time.num, k.time.den);
+            require(
+                keys.insert((k.property.clone(), normalized.num, normalized.den)),
+                "Duplicate source-relative keyframe",
+            )?;
+        }
+        let mut expected = c.clone();
+        project_retime(&mut expected, p.fps)?;
+        let mut stored_keys = c.keyframes.clone();
+        let mut projected_keys = expected.keyframes.clone();
+        let order =
+            |a: &Keyframe, b: &Keyframe| a.property.cmp(&b.property).then(a.frame.cmp(&b.frame));
+        stored_keys.sort_by(order);
+        projected_keys.sort_by(order);
+        require(
+            stored_keys == projected_keys
+                && c.fade_in == expected.fade_in
+                && c.fade_out == expected.fade_out
+                && c.fade_in_start() == expected.fade_in_start()
+                && c.fade_out_end() == expected.fade_out_end()
+                && c.composition.as_ref().map(|o| o.offset)
+                    == expected.composition.as_ref().map(|o| o.offset),
+            "Retiming controls disagree with their retained source envelope",
+        )?;
     }
     Ok(())
 }
@@ -478,6 +575,9 @@ fn inherit_envelopes(c: &mut Clip, offset: i64) {
         offset: 0,
     });
     origin.offset += offset;
+    if let Some(r) = &mut c.retime {
+        r.composition_source_offset.get_or_insert(Rational::zero());
+    }
     if c.media_id.is_some() {
         c.render_offset = Some(c.render_offset.unwrap_or(0) + offset);
     }
@@ -503,13 +603,228 @@ fn default_clip(track_id: String, start: i64, duration: i64) -> Clip {
         fade_out_end: None,
         composition: None,
         render_offset: None,
+        retime: None,
         brightness: 0.,
         contrast: 1.,
         saturation: 1.,
         keyframes: vec![],
     }
 }
-fn patch_clip(c: &mut Clip, patch: Value) -> Result<(), String> {
+fn capture_retime(c: &Clip, fps: Rational) -> Result<ClipRetime, String> {
+    Ok(ClipRetime {
+        source_span: source_frames(c.duration, fps, c.speed)?,
+        envelope: SourceEnvelope {
+            keyframes: c
+                .keyframes
+                .iter()
+                .map(|k| {
+                    Ok(SourceKeyframe {
+                        property: k.property.clone(),
+                        time: source_frames(k.frame, fps, c.speed)?,
+                        value: k.value,
+                    })
+                })
+                .collect::<Result<_, String>>()?,
+            fade_in: source_frames(c.fade_in, fps, c.speed)?,
+            fade_out: source_frames(c.fade_out, fps, c.speed)?,
+            fade_in_start: source_frames(c.fade_in_start(), fps, c.speed)?,
+            fade_out_end: source_frames(c.fade_out_end(), fps, c.speed)?,
+        },
+        render_source_origin: c.source_in.checked_sub(source_frames(
+            c.render_offset.unwrap_or(0),
+            fps,
+            c.speed,
+        )?)?,
+        composition_source_offset: c
+            .composition
+            .as_ref()
+            .map(|o| source_frames(o.offset, fps, c.speed))
+            .transpose()?,
+    })
+}
+fn project_retime(c: &mut Clip, fps: Rational) -> Result<(), String> {
+    let Some(r) = &c.retime else { return Ok(()) };
+    // Coincident display keys are merged only on the integer UI grid. Exact
+    // canonical control points remain available to the renderer and future rates.
+    let mut keys = r.envelope.keyframes.iter().collect::<Vec<_>>();
+    keys.sort_by(|a, b| compare(a.time, b.time));
+    let mut projected = std::collections::BTreeMap::new();
+    for k in keys {
+        let frame = timeline_frames(k.time, c.speed, fps)?;
+        if (0..=c.duration).contains(&frame) {
+            projected.insert(
+                (k.property.clone(), frame),
+                Keyframe {
+                    property: k.property.clone(),
+                    frame,
+                    value: k.value,
+                },
+            );
+        }
+    }
+    c.keyframes = projected.into_values().collect();
+    c.fade_in = timeline_frames(r.envelope.fade_in, c.speed, fps)?;
+    c.fade_out = timeline_frames(r.envelope.fade_out, c.speed, fps)?;
+    c.fade_in_start = Some(timeline_frames(r.envelope.fade_in_start, c.speed, fps)?);
+    c.fade_out_end = Some(timeline_frames(r.envelope.fade_out_end, c.speed, fps)?);
+    if let Some(origin) = &mut c.composition {
+        origin.offset = timeline_frames(
+            r.composition_source_offset.unwrap_or(Rational::zero()),
+            c.speed,
+            fps,
+        )?;
+    }
+    // The exact source clock supersedes the legacy integer conversion offset.
+    c.render_offset = None;
+    Ok(())
+}
+fn evaluate_source(envelope: &SourceEnvelope, property: &str, time: Rational) -> Option<f64> {
+    let mut keys: Vec<_> = envelope
+        .keyframes
+        .iter()
+        .filter(|k| k.property == property)
+        .collect();
+    keys.sort_by(|a, b| compare(a.time, b.time));
+    let first = keys.first()?;
+    if compare(time, first.time).is_le() {
+        return Some(first.value);
+    }
+    for pair in keys.windows(2) {
+        if compare(time, pair[1].time).is_le() {
+            let fraction = time.checked_sub(pair[0].time).ok()?.value()
+                / pair[1].time.checked_sub(pair[0].time).ok()?.value();
+            return Some(pair[0].value + (pair[1].value - pair[0].value) * fraction);
+        }
+    }
+    Some(keys.last()?.value)
+}
+fn retime_interval(
+    c: &mut Clip,
+    offset: Rational,
+    span: Rational,
+    fps: Rational,
+) -> Result<(), String> {
+    let Some(r) = &mut c.retime else {
+        return Ok(());
+    };
+    let original = r.envelope.clone();
+    let end = offset.checked_add(span)?;
+    r.envelope
+        .keyframes
+        .retain(|k| compare(k.time, offset).is_ge() && compare(k.time, end).is_le());
+    for k in &mut r.envelope.keyframes {
+        k.time = k.time.checked_sub(offset)?;
+    }
+    let properties: HashSet<_> = original
+        .keyframes
+        .iter()
+        .map(|k| k.property.clone())
+        .collect();
+    for property in properties {
+        for (time, before) in [(Rational::zero(), offset), (span, end)] {
+            if !r
+                .envelope
+                .keyframes
+                .iter()
+                .any(|k| k.property == property && compare(k.time, time).is_eq())
+            {
+                r.envelope.keyframes.push(SourceKeyframe {
+                    property: property.clone(),
+                    time,
+                    value: evaluate_source(&original, &property, before).unwrap(),
+                });
+            }
+        }
+    }
+    r.envelope.fade_in_start = r.envelope.fade_in_start.checked_sub(offset)?;
+    r.envelope.fade_out_end = r.envelope.fade_out_end.checked_sub(offset)?;
+    if let Some(composition) = &mut r.composition_source_offset {
+        *composition = composition.checked_add(offset)?;
+    }
+    r.source_span = span;
+    project_retime(c, fps)
+}
+fn retime_clip(p: &mut Project, id: &str, speed: Rational) -> Result<(), String> {
+    speed.validate(true)?;
+    require(
+        speed.num as i128 * 20 >= speed.den as i128 && speed.num as i128 <= speed.den as i128 * 32,
+        "Speed must be between 0.05 and 32",
+    )?;
+    let speed = Rational::new(speed.num, speed.den);
+    p.validate()?;
+    let selected = p
+        .clips
+        .iter()
+        .find(|c| c.id == id)
+        .ok_or("Clip not found")?;
+    let ids = expanded(p, &[id.to_owned()]);
+    ensure_unlocked(p, &ids)?;
+    let mut next = p.clone();
+    for c in next.clips.iter_mut().filter(|c| ids.contains(&c.id)) {
+        require(
+            c.start == selected.start && compare(c.speed, selected.speed).is_eq(),
+            "Linked clips must share a start and speed. Align them or unlink before changing speed",
+        )?;
+        let media = p
+            .media
+            .iter()
+            .find(|m| c.media_id.as_ref() == Some(&m.id))
+            .ok_or("Titles and still images do not support speed changes")?;
+        require(
+            media.kind != "image" && c.title.is_none(),
+            "Titles and still images do not support speed changes",
+        )?;
+        require(
+            !media.missing && std::path::Path::new(&media.path).is_file(),
+            "Relink missing media before changing speed",
+        )?;
+        let mut state = c
+            .retime
+            .clone()
+            .map(Ok)
+            .unwrap_or_else(|| capture_retime(c, p.fps))?;
+        if let Some(offset) = &mut state.composition_source_offset {
+            // Compositing order is anchored in sequence time, independently of
+            // the physical source-conversion phase retained below.
+            *offset = offset
+                .checked_mul(speed)?
+                .checked_mul(Rational::new(c.speed.den, c.speed.num))?;
+        }
+        let duration = timeline_frames(state.source_span, speed, p.fps)?;
+        require(
+            duration >= 1
+                && duration <= 10_000_000
+                && c.start
+                    .checked_add(duration)
+                    .map(|e| e <= 10_000_000)
+                    .unwrap_or(false),
+            "Speed would make the clip shorter than one frame or exceed timeline limits",
+        )?;
+        c.speed = speed;
+        c.duration = duration;
+        c.retime = Some(state);
+        project_retime(c, p.fps)?;
+    }
+    for a in next.clips.iter().filter(|c| ids.contains(&c.id)) {
+        for b in &next.clips {
+            if a.id == b.id || a.track_id != b.track_id {
+                continue;
+            }
+            let old_a = p.clips.iter().find(|c| c.id == a.id).unwrap();
+            let old_b = p.clips.iter().find(|c| c.id == b.id).unwrap();
+            let overlap = |x: &Clip, y: &Clip| (x.end().min(y.end()) - x.start.max(y.start)).max(0);
+            require(
+                overlap(a, b) <= overlap(old_a, old_b),
+                "Speed would overlap another clip on this track. Move the neighbor or trim first",
+            )?;
+        }
+    }
+    // Unlike ordinary edits, retiming never silently changes an explicit range.
+    next.validate()?;
+    *p = next;
+    Ok(())
+}
+fn patch_clip(c: &mut Clip, patch: Value, fps: Rational) -> Result<(), String> {
     let map = patch.as_object().ok_or("Clip patch must be an object")?;
     let allowed = [
         "name",
@@ -528,6 +843,7 @@ fn patch_clip(c: &mut Clip, patch: Value) -> Result<(), String> {
         "keyframes",
         "title",
     ];
+    let before = c.clone();
     let mut value = serde_json::to_value(&*c).map_err(|e| e.to_string())?;
     for (key, v) in map {
         require(
@@ -568,9 +884,80 @@ fn patch_clip(c: &mut Clip, patch: Value) -> Result<(), String> {
     if map.contains_key("speed") || map.contains_key("source_in") {
         c.render_offset = None;
     }
+    if let Some(r) = &mut c.retime {
+        if map.contains_key("keyframes") {
+            let properties: HashSet<_> = before
+                .keyframes
+                .iter()
+                .chain(&c.keyframes)
+                .map(|k| k.property.clone())
+                .collect();
+            for property in properties {
+                let mut old: Vec<_> = before
+                    .keyframes
+                    .iter()
+                    .filter(|k| k.property == property)
+                    .collect();
+                let mut new: Vec<_> = c
+                    .keyframes
+                    .iter()
+                    .filter(|k| k.property == property)
+                    .collect();
+                old.sort_by_key(|k| k.frame);
+                new.sort_by_key(|k| k.frame);
+                if old != new {
+                    r.envelope.keyframes.retain(|k| k.property != property);
+                    for k in new {
+                        r.envelope.keyframes.push(SourceKeyframe {
+                            property: k.property.clone(),
+                            time: source_frames(k.frame, fps, c.speed)?,
+                            value: k.value,
+                        });
+                    }
+                }
+            }
+        }
+        if map.contains_key("fade_in") && c.fade_in != before.fade_in {
+            r.envelope.fade_in = source_frames(c.fade_in, fps, c.speed)?;
+            r.envelope.fade_in_start = Rational::zero();
+        }
+        if map.contains_key("fade_out") && c.fade_out != before.fade_out {
+            r.envelope.fade_out = source_frames(c.fade_out, fps, c.speed)?;
+            r.envelope.fade_out_end = source_frames(c.duration, fps, c.speed)?;
+        }
+        if map.contains_key("source_in") && !compare(c.source_in, before.source_in).is_eq() {
+            r.render_source_origin = c.source_in;
+        }
+    }
+    if c.retime.is_some() {
+        if map.contains_key("duration") && c.duration != before.duration {
+            retime_interval(
+                c,
+                Rational::zero(),
+                source_frames(c.duration, fps, c.speed)?,
+                fps,
+            )?;
+        } else {
+            project_retime(c, fps)?;
+        }
+    }
     Ok(())
 }
 pub fn apply(p: &mut Project, cmd: EditCommand) -> Result<(), String> {
+    if let EditCommand::RetimeClip { id, speed } = &cmd {
+        return retime_clip(p, id, *speed);
+    }
+    if let EditCommand::UpdateClip { id, patch } = &cmd {
+        if let Some(map) = patch.as_object().filter(|map| map.contains_key("speed")) {
+            require(
+                map.len() == 1,
+                "Change speed with retime_clip separately from other clip properties",
+            )?;
+            let speed = serde_json::from_value(map["speed"].clone())
+                .map_err(|e| format!("Invalid speed: {e}"))?;
+            return retime_clip(p, id, speed);
+        }
+    }
     let explicit_range = matches!(&cmd, EditCommand::SetRange { .. });
     match cmd {
         EditCommand::AddClip {
@@ -694,6 +1081,9 @@ pub fn apply(p: &mut Project, cmd: EditCommand) -> Result<(), String> {
                 {
                     // A fragment moved independently becomes an independent layer.
                     c.composition = None;
+                    if let Some(r) = &mut c.retime {
+                        r.composition_source_offset = None;
+                    }
                 }
                 c.start += delta;
                 if source_track.as_ref() == Some(&c.track_id) {
@@ -725,13 +1115,28 @@ pub fn apply(p: &mut Project, cmd: EditCommand) -> Result<(), String> {
                     .source_in
                     .checked_add(Rational::from_frames(offset, p.fps).checked_mul(c.speed)?)?;
                 let right_duration = right.duration;
-                rebase_keys(&mut right, offset, right_duration);
+                if let Some(r) = &c.retime {
+                    let consumed = source_frames(offset, p.fps, c.speed)?;
+                    let remaining = r.source_span.checked_sub(consumed)?;
+                    retime_interval(&mut right, consumed, remaining, p.fps)?;
+                } else {
+                    rebase_keys(&mut right, offset, right_duration);
+                }
                 if let Some(ref link) = c.linked_id {
                     right.linked_id =
                         Some(split_links.entry(link.clone()).or_insert_with(id).clone());
                 }
                 c.duration = offset;
-                rebase_keys(c, 0, offset);
+                if c.retime.is_some() {
+                    retime_interval(
+                        c,
+                        Rational::zero(),
+                        source_frames(offset, p.fps, c.speed)?,
+                        p.fps,
+                    )?;
+                } else {
+                    rebase_keys(c, 0, offset);
+                }
                 added.push(right);
             }
             p.clips.extend(added);
@@ -761,15 +1166,28 @@ pub fn apply(p: &mut Project, cmd: EditCommand) -> Result<(), String> {
                     c.source_in = c
                         .source_in
                         .checked_add(Rational::from_frames(delta, p.fps).checked_mul(c.speed)?)?;
-                    rebase_keys(c, delta, d);
                     c.start += delta;
                     c.duration = d;
+                    if let Some(r) = &c.retime {
+                        let consumed = source_frames(delta, p.fps, c.speed)?;
+                        let remaining = r.source_span.checked_sub(consumed)?;
+                        retime_interval(c, consumed, remaining, p.fps)?;
+                    } else {
+                        rebase_keys(c, delta, d);
+                    }
                 } else {
                     let d = c.duration + delta;
                     require(d > 0, "Trim would remove the whole clip")?;
                     inherit_envelopes(c, 0);
-                    rebase_keys(c, 0, d);
                     c.duration = d;
+                    if let Some(r) = &c.retime {
+                        let span = r
+                            .source_span
+                            .checked_add(source_frames(delta, p.fps, c.speed)?)?;
+                        retime_interval(c, Rational::zero(), span, p.fps)?;
+                    } else {
+                        rebase_keys(c, 0, d);
+                    }
                 }
             }
         }
@@ -833,23 +1251,39 @@ pub fn apply(p: &mut Project, cmd: EditCommand) -> Result<(), String> {
             let mut origins = std::collections::HashMap::new();
             for c in &selected {
                 if let Some(origin) = &c.composition {
+                    let exact_offset = c
+                        .retime
+                        .as_ref()
+                        .and_then(|r| r.composition_source_offset)
+                        .map(|s| s.checked_mul(Rational::new(c.speed.den, c.speed.num)))
+                        .transpose()?
+                        .unwrap_or(Rational::from_frames(origin.offset, p.fps));
                     let entry = origins
                         .entry(origin.group_id.clone())
-                        .or_insert_with(|| (id(), origin.offset));
+                        .or_insert_with(|| (id(), origin.offset, exact_offset));
                     entry.1 = entry.1.min(origin.offset);
+                    if compare(exact_offset, entry.2).is_lt() {
+                        entry.2 = exact_offset;
+                    }
                 }
             }
             for mut c in selected {
                 c.id = id();
                 c.start += shift;
                 if let Some(origin) = &mut c.composition {
-                    let (group_id, first_offset) = &origins[&origin.group_id];
+                    let (group_id, first_offset, first_exact) = &origins[&origin.group_id];
                     origin.group_id = group_id.clone();
                     origin.offset -= first_offset;
+                    if let Some(r) = &mut c.retime {
+                        if let Some(offset) = &mut r.composition_source_offset {
+                            *offset = offset.checked_sub(first_exact.checked_mul(c.speed)?)?;
+                        }
+                    }
                 }
-                if let Some(link) = c.linked_id {
-                    c.linked_id = Some(links.entry(link).or_insert_with(id).clone());
+                if let Some(ref link) = c.linked_id {
+                    c.linked_id = Some(links.entry(link.clone()).or_insert_with(id).clone());
                 }
+                project_retime(&mut c, p.fps)?;
                 p.clips.push(c);
             }
         }
@@ -865,6 +1299,9 @@ pub fn apply(p: &mut Project, cmd: EditCommand) -> Result<(), String> {
                 c.source_in = c
                     .source_in
                     .checked_add(Rational::from_frames(delta, p.fps).checked_mul(c.speed)?)?;
+                if let Some(r) = &mut c.retime {
+                    r.render_source_origin = c.source_in;
+                }
             }
         }
         EditCommand::Link { ids } => {
@@ -898,6 +1335,10 @@ pub fn apply(p: &mut Project, cmd: EditCommand) -> Result<(), String> {
                     let mut audio = c.clone();
                     audio.id = id();
                     audio.composition = None;
+                    if let Some(r) = &mut audio.retime {
+                        r.composition_source_offset = None;
+                        r.envelope.keyframes.retain(|k| k.property == "volume");
+                    }
                     audio.track_id = audio_track
                         .clone()
                         .ok_or("Add an unlocked audio track before extracting audio")?;
@@ -907,6 +1348,9 @@ pub fn apply(p: &mut Project, cmd: EditCommand) -> Result<(), String> {
                     audio.keyframes.retain(|k| k.property == "volume");
                     c.volume = 0.;
                     c.keyframes.retain(|k| k.property != "volume");
+                    if let Some(r) = &mut c.retime {
+                        r.envelope.keyframes.retain(|k| k.property != "volume");
+                    }
                     extracted.push(audio);
                 }
                 c.linked_id = None;
@@ -920,8 +1364,9 @@ pub fn apply(p: &mut Project, cmd: EditCommand) -> Result<(), String> {
                 .iter_mut()
                 .find(|c| c.id == id)
                 .ok_or("Clip not found")?;
-            patch_clip(c, patch)?;
+            patch_clip(c, patch, p.fps)?;
         }
+        EditCommand::RetimeClip { .. } => unreachable!(),
         EditCommand::CrossDissolve { id, frames } => {
             require(
                 frames > 0 && frames <= 10_000_000,
@@ -966,10 +1411,22 @@ pub fn apply(p: &mut Project, cmd: EditCommand) -> Result<(), String> {
                     c.composition = None;
                     c.fade_in = frames.min(c.duration);
                     c.fade_in_start = None;
+                    if let Some(r) = &mut c.retime {
+                        r.composition_source_offset = None;
+                        r.envelope.fade_in = source_frames(c.fade_in, p.fps, c.speed)?;
+                        r.envelope.fade_in_start = Rational::zero();
+                    }
                 }
                 if outgoing_ids.contains(&c.id) {
                     c.fade_out = frames.min(c.duration);
                     c.fade_out_end = None;
+                    if let Some(r) = &mut c.retime {
+                        r.envelope.fade_out = source_frames(c.fade_out, p.fps, c.speed)?;
+                        r.envelope.fade_out_end = source_frames(c.duration, p.fps, c.speed)?;
+                    }
+                }
+                if incoming_ids.contains(&c.id) || outgoing_ids.contains(&c.id) {
+                    project_retime(c, p.fps)?;
                 }
             }
         }

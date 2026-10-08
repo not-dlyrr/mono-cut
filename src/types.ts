@@ -5,12 +5,14 @@ export interface Bin { id: string; name: string }
 export interface Track { id: string; name: string; kind: 'video' | 'audio'; muted: boolean; hidden: boolean; locked: boolean }
 export interface Keyframe { property: 'opacity' | 'volume' | 'x' | 'y' | 'scale'; frame: number; value: number }
 export interface Transform { x: number; y: number; scale: number; rotation: number; crop_left: number; crop_right: number; crop_top: number; crop_bottom: number }
-export interface Clip { id: string; media_id: string | null; track_id: string; name: string; start: number; duration: number; source_in: Rational; speed: Rational; linked_id: string | null; title: string | null; transform: Transform; opacity: number; volume: number; fade_in: number; fade_out: number; fade_in_start?: number | null; fade_out_end?: number | null; composition?: { group_id: string; offset: number } | null; render_offset?: number | null; brightness: number; contrast: number; saturation: number; keyframes: Keyframe[] }
+export interface ClipRetime { source_span: Rational; envelope: { keyframes: { property: string; time: Rational; value: number }[]; fade_in: Rational; fade_out: Rational; fade_in_start: Rational; fade_out_end: Rational }; render_source_origin: Rational; composition_source_offset?: Rational }
+export interface Clip { id: string; media_id: string | null; track_id: string; name: string; start: number; duration: number; source_in: Rational; speed: Rational; retime?: ClipRetime; linked_id: string | null; title: string | null; transform: Transform; opacity: number; volume: number; fade_in: number; fade_out: number; fade_in_start?: number | null; fade_out_end?: number | null; composition?: { group_id: string; offset: number } | null; render_offset?: number | null; brightness: number; contrast: number; saturation: number; keyframes: Keyframe[] }
 export interface Marker { id: string; frame: number; name: string }
 export interface Project { version: number; id: string; name: string; width: number; height: number; fps: Rational; sample_rate: number; media: Media[]; bins: Bin[]; tracks: Track[]; clips: Clip[]; markers: Marker[]; in_point: number | null; out_point: number | null }
-export interface Job { id: string; kind: 'preview' | 'export' | 'proxy'; status: 'running' | 'complete' | 'cancelled' | 'failed'; progress: number; path: string | null; error: string | null; preview_key?: string | null }
+export interface Job { id: string; kind: 'preview' | 'export' | 'proxy'; status: 'running' | 'complete' | 'cancelled' | 'failed'; progress: number; path: string | null; error: string | null; preview_key?: string | null; preview_region?: import('./previewRegion').PreviewRegion | null }
 export interface Capabilities { ffmpeg: string; ffprobe: string; version: string; encoders: string[]; hardware: string[]; gpu_devices: string[]; cache_dir: string }
-export type EditCommand = { type: string; [key: string]: unknown };
+export interface RetimeClipCommand { type: 'retime_clip'; id: string; speed: Rational }
+export type EditCommand = RetimeClipCommand | { type: string; [key: string]: unknown };
 export interface ExportSettings { width: number; height: number; fps: Rational; codec: 'h264' | 'ffv1'; crf: number; audio_bitrate: number; sample_rate: number }
 export type Edit = (command: EditCommand) => Promise<void>;
 export const fpsValue = (r: Rational) => r.num / r.den;

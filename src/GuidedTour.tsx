@@ -10,8 +10,8 @@ const steps = [
   { target: 'save', title: 'Keep your project', text: 'Click Save to create a .monocut project you can reopen. Autosave helps with recovery, but save a named project to keep your work.' },
   { target: 'export', title: 'Export your finished video', text: 'When your timeline is ready, choose Export. Set the size, frame rate and quality, then choose the video file. You can cancel while it encodes.' },
 ];
-export default function GuidedTour({ onClose, onStep }: { onClose: () => void; onStep: (step: number) => void }) {
-  const [step, setStep] = useState(0), [anchor, setAnchor] = useState<DOMRect | null>(null), [position, setPosition] = useState({ left: 20, top: 70 }); const card = useRef<HTMLDivElement>(null), next = useRef<HTMLButtonElement>(null);
+export default function GuidedTour({ step, setStep, onClose, onStep }: { step: number; setStep: (step: number) => void; onClose: () => void; onStep: (step: number) => void }) {
+  const [anchor, setAnchor] = useState<DOMRect | null>(null), [position, setPosition] = useState({ left: 20, top: 70 }); const card = useRef<HTMLDivElement>(null), next = useRef<HTMLButtonElement>(null);
   useEffect(() => { next.current?.focus(); const key = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); onClose(); } }; document.addEventListener('keydown', key); return () => document.removeEventListener('keydown', key); }, [onClose]);
   useEffect(() => onStep(step), [step]);
   useLayoutEffect(() => {
@@ -20,6 +20,6 @@ export default function GuidedTour({ onClose, onStep }: { onClose: () => void; o
   }, [step]);
   return <>{anchor && <div className="tour-highlight" style={{ left: anchor.left - 4, top: anchor.top - 4, width: anchor.width + 8, height: anchor.height + 8 }} aria-hidden="true" />}<div ref={card} className="tour-card glass" style={position} role="dialog" aria-modal="false" aria-labelledby="tour-title" aria-describedby="tour-description">
     <div className="tour-top"><span>Quick tour · {step + 1} of {steps.length}</span><button aria-label="Skip tutorial" onClick={onClose}><X size={15} /></button></div><h2 id="tour-title">{steps[step].title}</h2><p id="tour-description">{steps[step].text}</p>
-    <div className="tour-actions"><button className="text-button" onClick={onClose}>Skip tour</button><div><button className="tour-back" aria-label="Previous step" disabled={step === 0} onClick={() => setStep(s => s - 1)}><ArrowLeft size={14} /></button><button ref={next} className="primary-button" aria-label={step === steps.length - 1 ? 'Finish tutorial' : 'Next step'} onClick={() => step === steps.length - 1 ? onClose() : setStep(s => s + 1)}>{step === steps.length - 1 ? 'Start editing' : 'Next'}<ArrowRight size={13} /></button></div></div>
+    <div className="tour-actions"><button className="text-button" onClick={onClose}>Skip tour</button><div><button className="tour-back" aria-label="Previous step" disabled={step === 0} onClick={() => setStep(step - 1)}><ArrowLeft size={14} /></button><button ref={next} className="primary-button" aria-label={step === steps.length - 1 ? 'Finish tutorial' : 'Next step'} onClick={() => step === steps.length - 1 ? onClose() : setStep(step + 1)}>{step === steps.length - 1 ? 'Start editing' : 'Next'}<ArrowRight size={13} /></button></div></div>
   </div></>;
 }

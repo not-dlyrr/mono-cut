@@ -226,6 +226,30 @@ pub struct CompositionOrigin {
     pub group_id: String,
     pub offset: i64,
 }
+/// Automation positions are exact source-progress seconds, relative to source_in.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct SourceKeyframe {
+    pub property: String,
+    pub time: Rational,
+    pub value: f64,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct SourceEnvelope {
+    pub keyframes: Vec<SourceKeyframe>,
+    pub fade_in: Rational,
+    pub fade_out: Rational,
+    pub fade_in_start: Rational,
+    pub fade_out_end: Rational,
+}
+/// Durable retiming state. Integer timeline fields are projections of this state.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ClipRetime {
+    pub source_span: Rational,
+    pub envelope: SourceEnvelope,
+    pub render_source_origin: Rational,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub composition_source_offset: Option<Rational>,
+}
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Clip {
     pub id: String,
@@ -252,6 +276,8 @@ pub struct Clip {
     /// Sequence-frame offset from the source conversion clock inherited by cuts.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub render_offset: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retime: Option<ClipRetime>,
     pub brightness: f64,
     pub contrast: f64,
     pub saturation: f64,
@@ -390,6 +416,10 @@ pub enum EditCommand {
         id: String,
         delta: i64,
     },
+    RetimeClip {
+        id: String,
+        speed: Rational,
+    },
     Link {
         ids: Vec<String>,
     },
@@ -448,6 +478,20 @@ pub struct ExportSettings {
     pub audio_bitrate: u32,
     pub sample_rate: u32,
 }
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PreviewRegion {
+    pub start_frame: i64,
+    pub end_frame: i64,
+}
+impl PreviewRegion {
+    pub fn validate(&self, p: &Project) -> Result<(), String> {
+        if self.start_frame < 0 || self.end_frame <= self.start_frame || self.end_frame > p.length()
+        {
+            return Err("Preview coverage must be a nonempty range within the sequence".into());
+        }
+        Ok(())
+    }
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Job {
     pub id: String,
@@ -458,6 +502,8 @@ pub struct Job {
     pub error: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub preview_key: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preview_region: Option<PreviewRegion>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Capabilities {

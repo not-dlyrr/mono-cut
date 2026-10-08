@@ -98,6 +98,21 @@ and trim extensions are documented in [cuts and inherited envelopes](split-envel
 Links group related clip instances; unlinking an audio-bearing video can create a
 separate audio instance rather than modifying the source file.
 
+Unreleased source adds optional `clip.retime` to version 1. Its `source_span`
+retains the exact rational selection, even when its current visible duration
+has a fractional frame remainder. `envelope` contains rational source-progress
+fade durations/anchors and keyframes `{property, time, value}`. Integer clip
+effect fields are projections for the interface; contradictory projections are
+rejected. `render_source_origin` retains the exact source conversion clock
+through speed changes and cuts, including signed continuation phases after a
+trim extension. Optional `composition_source_offset` encodes the existing
+timeline ordering anchor at the current speed; it is rescaled on retime so the
+anchor and layer order stay fixed. Absent `retime` preserves legacy clip/envelope
+semantics; the shared renderer still uses the current preview recipe. See [Speed policy and validation](retiming.md) for rounding, linked
+transactions, collision rejection and source-stage limits.
+Older builds do not understand this canonical state and can discard it when
+resaving. Use a build from the current source for projects with `retime`.
+
 The Rust validators define exact ranges and reference constraints. Use editor
 commands for modifications; manually edited invalid references, oversized files,
 negative durations or unsupported versions are rejected with errors.

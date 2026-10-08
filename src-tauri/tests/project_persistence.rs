@@ -63,6 +63,7 @@ fn title(track_id: &str, index: usize, text: String) -> Clip {
         fade_out_end: None,
         composition: None,
         render_offset: None,
+        retime: None,
         brightness: 0.,
         contrast: 1.,
         saturation: 1.,

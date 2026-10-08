@@ -1,0 +1,1091 @@
+{
+  "version": 1,
+  "stage": 6,
+  "scope": "Unreleased source; silent files and controlled compiled component trees only",
+  "verified": true,
+  "source_waveform": {
+    "bins": 1024,
+    "decoded_samples": 64800,
+    "exact_f32_bin_maxima": true,
+    "audio_padding_seconds": 0.2,
+    "early_impulse_bins": [
+      111
+    ],
+    "old_sampling_would_drop_impulse": true
+  },
+  "fixtures": [
+    {
+      "file": "pulse-base.mkv",
+      "sha256": "30825084ee9e6bbb4c1bfd515f1fffa467da2a2b1bcdf89224a8197db1c3f26e"
+    },
+    {
+      "file": "pulse-offset.mkv",
+      "sha256": "e489d5d770b3ff6c51370ff9033584917d30061de8a7846ed2ccf85823cfd0c5"
+    }
+  ],
+  "tools": {
+    "preview-retime-v8-driver.exe": "a9a7193ea0943822b651d79ae93f03113037af582b9e7eb229676f89d0f4b0d2",
+    "ffmpeg.exe": "f3762e006f5ccbccef744637e36bd922767fa6d16182b36c4574c0272d23e0ab",
+    "ffprobe.exe": "79e40c9de4efd866cd3abe8e24824c0b5c3116c2eb6f397ad91c429896cd048f",
+    "Inter.ttf": "40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82"
+  },
+  "native_source_hashes": {
+    "src-tauri/examples/preview_region_driver.rs": "bd82cc3fe07efeceb86c5e78de93ab16eaf012cedb3c647ff279e675ce79b830",
+    "src-tauri/src/audio_clock.rs": "f86fc0f8e5038efdcf21eb9d8a61910c0cb554b64ed2d8ad5461f5ccd84dfb21",
+    "src-tauri/src/edit.rs": "57c83513b584cc2d53efe32bca4c42fe789c07f3e36c0f73b0e69892d16bfacd",
+    "src-tauri/src/jobs.rs": "81b4c9366904b2fb186dcdf96792a10f4687bbea7fb5d6862c937555168bc938",
+    "src-tauri/src/lib.rs": "4d125b2ace59de39eb2ef8bc2392ec3a55516a010ac0e2331456d763cd5bf8d8",
+    "src-tauri/src/main.rs": "8e74f93691f81281b143cd900d4a853d8999baae7e65a532766a0999af8140bf",
+    "src-tauri/src/media.rs": "8addd03f5dc5b4f72fca4695775a83530bae3e80d4b1dbd9ba289c2fee663c8a",
+    "src-tauri/src/model.rs": "dff19d8adac4d6133b8590eab9b2431557014a0f8222a0e0007bd617c87dd891",
+    "src-tauri/src/preview.rs": "a1b648751b5d8c617ad9b50c88a232a5d6719d5d1e4f5cc11597e827db9f1cd7",
+    "src-tauri/src/processes.rs": "bed1b12b96f2b0bd22e6d2f5f0eed41b048d3fc80c4f479a0da3e9b6b039b29f",
+    "src-tauri/src/render.rs": "0090951d29229401a6a952e9d0c7fb7e1f7237823cc9762b24652ebe45e79a0e",
+    "src-tauri/src/storage.rs": "0c6d1339f0dc1629c214f7d78247e9bee2a220a608a1f325745bae13b462b9b8",
+    "src-tauri/src/video_seek.rs": "dcdc6f0f3cb728317ffd952ead859c844401ba02e90d3a7a44d1d600d435415b",
+    "src-tauri/tests/bounded_regions.rs": "72b8bd32c36d868092cf73e6ba4996e632fdd35bb9e3a7721e9ea7be9291e572",
+    "src-tauri/tests/cache_retention.rs": "d711ec0e81ae47024bdf9b68bd0220b58a314a6f5b69b1a4a04d11324e86fc4d",
+    "src-tauri/tests/continuity_reference.rs": "3b918e11e41faf009adc485beeb495fc014e64fd305ceb3c2ce273f1f5c732af",
+    "src-tauri/tests/engine_workflow.rs": "078df676ae269b2bb1dfabbdb72cc27688983dff30dae65fdce5eb905a764c1c",
+    "src-tauri/tests/irregular_pts.rs": "8cd65c486998218e78a6fa2c35b96e8a01cdcf76c5e9b2af99a3967c1158a292",
+    "src-tauri/tests/legacy_timing_relink.rs": "cdca20c8a5ccc82f4fa783e3d16ff806628d11e66cc84c76a4ce794e6fecfe93",
+    "src-tauri/tests/preview_benchmark.rs": "93d14e28edd7039110b3d369369e254f6be2438bc057e755a6f41929e0190721",
+    "src-tauri/tests/preview_reuse.rs": "8853035f6afb3249c42b2e224f064e93022a0ac57f972e28cd15657ab2c5e1bb",
+    "src-tauri/tests/project_persistence.rs": "b678881aaba69e6c003fcb36e46f65d28c50686e99aab58f0751cbeb3a2d0e25",
+    "src-tauri/tests/region_benchmark.rs": "4ccf1482cd0fcd347861d1075702afe16dd68e053706981aeab062299aaef18e",
+    "src-tauri/tests/region_reference_control.rs": "e02f9184e8fb48c6729565c9ccdf517ea991a4fd51960376633e4f391d75ba00",
+    "src-tauri/tests/region_reference.rs": "70435aac6478302f641883ee9d121e10c2c793110da1ec914d94c7d8838feeb6",
+    "src-tauri/tests/retime.rs": "b7f9dbf51d3b43c52ad428b1cbd4cc97668682ea2045e6aa374addbd754fbec1",
+    "src-tauri/tests/source_timing.rs": "cd3744e5b49ce6a01231381d9b1cfa07f3ae9331f6453fde0d82eeca1009e9af",
+    "src-tauri/tests/split_envelopes.rs": "181269a6e14911a73594a375c2753a44f36e3bfc0ea8423a2b3575f19b288d18",
+    "src-tauri/tests/video_seek_policy.rs": "e646a60f4739abed9c0791d0fc53b666d001c4a95dbe5a903559b1a4f831d857",
+    "src-tauri/build.rs": "487059eaf8a947b80f20a9aacac038a5047b2ad69d2401b827376c67d6fe847f",
+    "src-tauri/Cargo.lock": "df4621c974420f222a32c9454a13b72fc904922f0451a7d1865a4fdd3bc2f063",
+    "src-tauri/Cargo.toml": "1ff2bfd675f1dbb686a0835b17cb01386ffc75698815418f4e707d355fc74717"
+  },
+  "frontend_hashes": {
+    "src/Timeline.tsx": "13f97b52aa35da1a246aeb4c465af192edb1417119427aff909a9f7074884e57",
+    "src/timelineWaveform.ts": "48c087afb7c358d124f48f78a5d04e79caf38371bd87b30d5a45824655dfaffa",
+    "tests/timeline-harness.mjs": "235800631ee5e56279ed076edd805806698fbfdde946f747bf03be440acb0081",
+    "tests/timeline-waveform.test.mjs": "1ae43e53f4173be88e80a1ae1e03c71aeb27574018cd6039b83c154b70c1d6a5",
+    "tests/run-preview-tests.mjs": "b6a037127b0532f936fb5063a1ec363d5787d400eff0b251984584ac8c44323b"
+  },
+  "helper_sha256": "b5103c4809ada83478a3373b7eb1375ab013a02ee2ea544c8112d3b29730f7c5",
+  "raw_results_sha256": "e5e2a35547a12529451378310093ce0a1a84dc3929afba35f4c7b70b499a6035",
+  "driver_build_record_sha256": "11ee183e225497ad36679fb0196d40234cb33e5af363340df98ec00d8699d972",
+  "driver_build_verified": true,
+  "proxy_source_curve_exact": true,
+  "cases": [
+    {
+      "label": "full-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 0
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 480,
+      "source_span": null,
+      "predicted_seconds": [
+        [
+          1.740740740740741,
+          1.7777777777777781
+        ],
+        [
+          13.259259259259261,
+          13.370370370370372
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.76,
+          1.7660208333333334
+        ],
+        [
+          13.300041666666667,
+          13.335020833333333
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.040782407407405685,
+      "tolerance_seconds": 0.05328703703703704,
+      "display_points": 432,
+      "bin_visits": 1443,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "2ea77a1057e1f6018b85dce100305060a56c2bd7179216d1126aac4f40e46db8",
+      "graph_sha256": "5bbbb0b39c7a6e06505c3dd75cdc1f1e947ad92c8b2cc0919cc542e437425479"
+    },
+    {
+      "label": "tail-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 12
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 120,
+      "source_span": null,
+      "predicted_seconds": [
+        [
+          1.2592592592592595,
+          1.3703703703703705
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.3000416666666668,
+          1.3350208333333333
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.04078240740740724,
+      "tolerance_seconds": 0.05328703703703704,
+      "display_points": 108,
+      "bin_visits": 361,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "ec21100a72299da2bea479c89e2351cded04905899f5cbc3600cd405a63400d7",
+      "graph_sha256": "6dd4275fea3db99373bf2c930e5c8afdc82f13645a481815b4d1fbb877d1ab7c"
+    },
+    {
+      "label": "tail-fast-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 12
+      },
+      "speed": {
+        "den": 1,
+        "num": 2
+      },
+      "duration_frames": 60,
+      "source_span": {
+        "den": 1,
+        "num": 4
+      },
+      "predicted_seconds": [
+        [
+          0.6296296296296298,
+          0.7037037037037038
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          0.6500208333333334,
+          0.6675208333333333
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.03618287037037049,
+      "tolerance_seconds": 0.04516203703703704,
+      "display_points": 54,
+      "bin_visits": 307,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "a43fb59ab7d5ea767a5bb23c9f8cf0571ccc179fc0cccd0d8a30e0f5afc97348",
+      "graph_sha256": "43a5f0a5e374a036a05927be99a89f9bbf22037f0c03bfe73d0cad3666a946ed"
+    },
+    {
+      "label": "tail-slow-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 12
+      },
+      "speed": {
+        "den": 2,
+        "num": 1
+      },
+      "duration_frames": 240,
+      "source_span": {
+        "den": 1,
+        "num": 4
+      },
+      "predicted_seconds": [
+        [
+          2.555555555555556,
+          2.703703703703704
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          2.6000625,
+          2.6700416666666666
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.04450694444444414,
+      "tolerance_seconds": 0.06953703703703704,
+      "display_points": 216,
+      "bin_visits": 469,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "5c68fcc02d420fa0d197b88eaa76773353afe2caf81fde19c15995e3331a4ae7",
+      "graph_sha256": "ab1bd7424d79e50d3be5dc5c71b72ae4aa9fc1c2a07924d860a8457e7640b013"
+    },
+    {
+      "label": "tail-rational-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 12
+      },
+      "speed": {
+        "den": 6,
+        "num": 7
+      },
+      "duration_frames": 102,
+      "source_span": {
+        "den": 1,
+        "num": 4
+      },
+      "predicted_seconds": [
+        [
+          1.0717391304347827,
+          1.182608695652174
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.1143125,
+          1.1443125
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.04257336956521729,
+      "tolerance_seconds": 0.050885093167701866,
+      "display_points": 92,
+      "bin_visits": 343,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "973ca235a017b91ccd6b3c701f7435827da22c30f99947574b54c60315838b31",
+      "graph_sha256": "9e31fc6c480ecfb2d3603eb87179ae39042740ed9a951d9b86acbb483028ec60"
+    },
+    {
+      "label": "tail-rational-proxy",
+      "proxy": true,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 12
+      },
+      "speed": {
+        "den": 6,
+        "num": 7
+      },
+      "duration_frames": 102,
+      "source_span": {
+        "den": 1,
+        "num": 4
+      },
+      "predicted_seconds": [
+        [
+          1.0717391304347827,
+          1.182608695652174
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.1143125,
+          1.1443125
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.04257336956521729,
+      "tolerance_seconds": 0.050885093167701866,
+      "display_points": 92,
+      "bin_visits": 343,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "baa814fda944a9822a794b425ca5325c4e95a6eaddb59bc64e538cf3b2792bf0",
+      "graph_sha256": "e11e13a6b60a69c0174936cf786de85667ab80de67eb25bdff984ade246d4446",
+      "fresh_process_save_reopen_curve_exact": true
+    },
+    {
+      "label": "slip-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 12
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 120,
+      "source_span": null,
+      "predicted_seconds": [
+        [
+          1.2592592592592595,
+          1.3703703703703705
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.3000416666666668,
+          1.3350208333333333
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.04078240740740724,
+      "tolerance_seconds": 0.05328703703703704,
+      "display_points": 108,
+      "bin_visits": 361,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "9177ca3ca95ec0344a487a0dd5208c3a08a4032cf3746a0196425eed7016922d",
+      "graph_sha256": "7fefcbbe4ad0dabba61d2fcc819d5bc251df15d0bcf1053aba62ad6ebbba83c6"
+    },
+    {
+      "label": "split-first-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 12
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 30,
+      "source_span": null,
+      "predicted_seconds": [],
+      "decoded_seconds": [],
+      "maximum_boundary_error_seconds": 0,
+      "tolerance_seconds": 0.05328703703703704,
+      "display_points": 27,
+      "bin_visits": 90,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "33b43f10d042ba9796b61c921ee1abf25b0fe982764985a208bb59fadd797d40",
+      "graph_sha256": "ac17aacf35fd053be8c613e2ef0396891f7e961259e4e6cd6d1927cdc6e8049c"
+    },
+    {
+      "label": "split-second-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 13
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 90,
+      "source_span": null,
+      "predicted_seconds": [
+        [
+          0.2592592592592593,
+          0.3703703703703704
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          0.30004166666666665,
+          0.3350208333333333
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.04078240740740735,
+      "tolerance_seconds": 0.05328703703703704,
+      "display_points": 81,
+      "bin_visits": 271,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "b18bc66dbbecd14df27f7969b00d76dfa643a5041cbf2b72c9f221f8a195571a",
+      "graph_sha256": "ac17aacf35fd053be8c613e2ef0396891f7e961259e4e6cd6d1927cdc6e8049c",
+      "split_undo_redo_curve_exact": true
+    },
+    {
+      "label": "trim-out-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 0
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 90,
+      "source_span": null,
+      "predicted_seconds": [
+        [
+          1.740740740740741,
+          1.7777777777777781
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.76,
+          1.7660208333333334
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.019259259259259087,
+      "tolerance_seconds": 0.05328703703703704,
+      "display_points": 81,
+      "bin_visits": 270,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "8699f0aadbcb766f61822c91774a1a2781bc5f269f7e2de6ab5c32cac153f967",
+      "graph_sha256": "f0ddd503bf8705dc3be8d3bc11364c7622d55bb3ce0132896779a88ffe1b4c76"
+    },
+    {
+      "label": "padding-fast-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 0
+      },
+      "speed": {
+        "den": 1,
+        "num": 2
+      },
+      "duration_frames": 45,
+      "source_span": {
+        "den": 1,
+        "num": 3
+      },
+      "predicted_seconds": [
+        [
+          0.8780487804878051,
+          0.9146341463414636
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          0.88,
+          0.8830208333333334
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.031613313008130195,
+      "tolerance_seconds": 0.044710365853658535,
+      "display_points": 41,
+      "bin_visits": 230,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "337aef54dd7152ce4e372791a745b54c091527151d73f2c60cad607a5589ece0",
+      "graph_sha256": "e5c18c3f047be5f7998c83e976166c0cd716cb9fae00f4e66de67f4457bfb0fc"
+    },
+    {
+      "label": "padding-slow-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 1,
+        "num": 0
+      },
+      "speed": {
+        "den": 2,
+        "num": 1
+      },
+      "duration_frames": 180,
+      "source_span": {
+        "den": 1,
+        "num": 3
+      },
+      "predicted_seconds": [
+        [
+          3.481481481481482,
+          3.5555555555555562
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          3.5199375,
+          3.5320416666666667
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.03845601851851832,
+      "tolerance_seconds": 0.06953703703703704,
+      "display_points": 162,
+      "bin_visits": 351,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "d362e0a51cc086498464fc6223d83d3814c6383f2bb82b331301933c745ce841",
+      "graph_sha256": "58b7171ab5831095e43dafb990002174f2a46a8684160e6bf8e134e4a4bc3de1"
+    },
+    {
+      "label": "fractional-source-false",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1,
+        "num": 30
+      },
+      "source_in": {
+        "den": 13,
+        "num": 7
+      },
+      "speed": {
+        "den": 6,
+        "num": 7
+      },
+      "duration_frames": 102,
+      "source_span": {
+        "den": 1,
+        "num": 4
+      },
+      "predicted_seconds": [
+        [
+          1.0347826086956522,
+          1.0717391304347825
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.047,
+          1.0521875
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.019551630434782474,
+      "tolerance_seconds": 0.050885093167701866,
+      "display_points": 92,
+      "bin_visits": 342,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "2990d316469cc2dcaceb2c33f821fc1b3cbd6b03695e8f77b363bcdc25e4801d",
+      "graph_sha256": "5c769e680a733841f0223eaaf670992203aec34378778d41181f1a61dee382d2"
+    },
+    {
+      "label": "full-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 1,
+        "num": 0
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 480,
+      "source_span": null,
+      "predicted_seconds": [
+        [
+          1.73845727482679,
+          1.7754457274826787
+        ],
+        [
+          13.278854503464203,
+          13.352831408775982
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.76,
+          1.7660208333333334
+        ],
+        [
+          13.300041666666667,
+          13.335020833333333
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.021542725173210098,
+      "tolerance_seconds": 0.05323845265588915,
+      "display_points": 433,
+      "bin_visits": 1445,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "f6fa85a35920ca28bbb422b0776b72875135ef4382fa8a6218f22e190203b3fb",
+      "graph_sha256": "bc74bc105f6af679d0113e65ba9f03b072de8a2a9e97e9e31d9947a93944841e"
+    },
+    {
+      "label": "tail-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 250,
+        "num": 3003
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 120,
+      "source_span": null,
+      "predicted_seconds": [
+        [
+          1.2489541284403671,
+          1.3591559633027521
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.2880416666666668,
+          1.3230208333333333
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.03908753822629962,
+      "tolerance_seconds": 0.05298394495412844,
+      "display_points": 109,
+      "bin_visits": 362,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "46482792155367f0752801f9aaac126c95c22376391990201e73e4985d92b758",
+      "graph_sha256": "887188570607028fea4220e70c2f36aff95d3bc1230564bab4bc7f94e4a610f3"
+    },
+    {
+      "label": "tail-fast-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 250,
+        "num": 3003
+      },
+      "speed": {
+        "den": 1,
+        "num": 2
+      },
+      "duration_frames": 60,
+      "source_span": {
+        "den": 250,
+        "num": 1001
+      },
+      "predicted_seconds": [
+        [
+          0.6188000000000001,
+          0.6915999999999999
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          0.6440208333333334,
+          0.6615208333333333
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.030079166666666546,
+      "tolerance_seconds": 0.044524999999999995,
+      "display_points": 55,
+      "bin_visits": 308,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "506979b64c35a4ae1d959e4265579a0a1bd16173ef2a3e0c3800cb675311eedf",
+      "graph_sha256": "1d77f98a7fed27cfda9034d2daa36d703f9f7002aba0755395afb5964e163585"
+    },
+    {
+      "label": "tail-slow-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 250,
+        "num": 3003
+      },
+      "speed": {
+        "den": 2,
+        "num": 1
+      },
+      "duration_frames": 240,
+      "source_span": {
+        "den": 250,
+        "num": 1001
+      },
+      "predicted_seconds": [
+        [
+          2.5463225806451617,
+          2.657032258064516
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          2.5760625,
+          2.6460416666666666
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.029739919354838218,
+      "tolerance_seconds": 0.06940322580645161,
+      "display_points": 217,
+      "bin_visits": 470,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "f0b1e94d7e7d52dc892515907b75c64a4bccec86c198c2401ca7096cfe680370",
+      "graph_sha256": "de6c14334f04e11b6569927a126f702108cf159c0f7355b7cd350bc3b6c6640d"
+    },
+    {
+      "label": "tail-rational-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 250,
+        "num": 3003
+      },
+      "speed": {
+        "den": 6,
+        "num": 7
+      },
+      "duration_frames": 102,
+      "source_span": {
+        "den": 250,
+        "num": 1001
+      },
+      "predicted_seconds": [
+        [
+          1.0728108695652174,
+          1.1467978260869565
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.1040208333333332,
+          1.1340208333333333
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.0312099637681158,
+      "tolerance_seconds": 0.050922049689440994,
+      "display_points": 92,
+      "bin_visits": 343,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "517178f35aef3436f114010c14721e8a8da243dc60b0b3bb22d9ab2b59109312",
+      "graph_sha256": "c5a60ebfa2da5df2d60f297c6a8ad4414e1182fd43b2cfc9e888464f8e3d8bd4",
+      "fresh_process_save_reopen_curve_exact": true
+    },
+    {
+      "label": "slip-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 250,
+        "num": 3003
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 120,
+      "source_span": null,
+      "predicted_seconds": [
+        [
+          1.2489541284403671,
+          1.3591559633027521
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.2880416666666668,
+          1.3230208333333333
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.03908753822629962,
+      "tolerance_seconds": 0.05298394495412844,
+      "display_points": 109,
+      "bin_visits": 362,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "ce303381ce71654c877ade418856ba8e6c292d0d0251d9e7f5cc423fd549e306",
+      "graph_sha256": "9d114666f7474faee7d99bc7c6edfc0273c42343c1ecddc652e3d33932a26d2c"
+    },
+    {
+      "label": "split-first-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 250,
+        "num": 3003
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 30,
+      "source_span": null,
+      "predicted_seconds": [],
+      "decoded_seconds": [],
+      "maximum_boundary_error_seconds": 0,
+      "tolerance_seconds": 0.052,
+      "display_points": 28,
+      "bin_visits": 91,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "8c302a1325350fdf9f746788c94aa7fdced7d6e3e09fb00fd7426201fe34942c",
+      "graph_sha256": "d20246e27e41cb1db14753f0abdcffee8bb48515a3207ccfa2e072b2175df12c"
+    },
+    {
+      "label": "split-second-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 1000,
+        "num": 13013
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 90,
+      "source_span": null,
+      "predicted_seconds": [
+        [
+          0.25635365853658537,
+          0.32959756097560966
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          0.28702083333333334,
+          0.322
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.030667174796747965,
+      "tolerance_seconds": 0.0528719512195122,
+      "display_points": 82,
+      "bin_visits": 272,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "4c1c1ddb8571cba7ca70dee1a670d6c29b40f0a70c6ee66db8589cf98d120f76",
+      "graph_sha256": "d20246e27e41cb1db14753f0abdcffee8bb48515a3207ccfa2e072b2175df12c",
+      "split_undo_redo_curve_exact": true
+    },
+    {
+      "label": "trim-out-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 1,
+        "num": 0
+      },
+      "speed": {
+        "den": 1,
+        "num": 1
+      },
+      "duration_frames": 90,
+      "source_span": null,
+      "predicted_seconds": [
+        [
+          1.721231707317073,
+          1.7944756097560974
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.76,
+          1.7660208333333334
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.03876829268292692,
+      "tolerance_seconds": 0.0528719512195122,
+      "display_points": 82,
+      "bin_visits": 271,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "406de07631f7ecc8d7d357494609d0816783345c3732644db4ef4ba1ffa6992e",
+      "graph_sha256": "f911eaa4c4fed3417477f846a7d9252e7be6285d1bdd28bccb09a80a85ac643c"
+    },
+    {
+      "label": "padding-fast-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 1,
+        "num": 0
+      },
+      "speed": {
+        "den": 1,
+        "num": 2
+      },
+      "duration_frames": 45,
+      "source_span": {
+        "den": 1000,
+        "num": 3003
+      },
+      "predicted_seconds": [
+        [
+          0.8423048780487805,
+          0.9155487804878047
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          0.88,
+          0.8830208333333334
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.03769512195121949,
+      "tolerance_seconds": 0.0447469512195122,
+      "display_points": 41,
+      "bin_visits": 230,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "13d4358252cbea82b7fa33b207842ff81a3b904ad4cef09520556af937b5ef38",
+      "graph_sha256": "a8adc4324419386cc2e477c5a522ccab3cb83de82e0df78781ac712e341b14c0"
+    },
+    {
+      "label": "padding-slow-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 1,
+        "num": 0
+      },
+      "speed": {
+        "den": 2,
+        "num": 1
+      },
+      "duration_frames": 180,
+      "source_span": {
+        "den": 1000,
+        "num": 3003
+      },
+      "predicted_seconds": [
+        [
+          3.5004294478527602,
+          3.574122699386503
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          3.5199375,
+          3.5320416666666667
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.04208103271983621,
+      "tolerance_seconds": 0.06934662576687117,
+      "display_points": 163,
+      "bin_visits": 352,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "f384c49e0381734cba37fe59a09f1f7b561751fba5c3ec2df69487fe549f4039",
+      "graph_sha256": "6149b49cefe8217641812f82e7c7eeca7d8ed13393276a49c8b93a8e74b2f2f6"
+    },
+    {
+      "label": "fractional-source-true",
+      "proxy": false,
+      "sequence_fps": {
+        "den": 1001,
+        "num": 30000
+      },
+      "source_in": {
+        "den": 13,
+        "num": 7
+      },
+      "speed": {
+        "den": 6,
+        "num": 7
+      },
+      "duration_frames": 102,
+      "source_span": {
+        "den": 250,
+        "num": 1001
+      },
+      "predicted_seconds": [
+        [
+          1.0358173913043478,
+          1.0728108695652174
+        ]
+      ],
+      "decoded_seconds": [
+        [
+          1.047,
+          1.0521875
+        ]
+      ],
+      "maximum_boundary_error_seconds": 0.020623369565217375,
+      "tolerance_seconds": 0.050922049689440994,
+      "display_points": 92,
+      "bin_visits": 343,
+      "easy_advanced_component_exact": true,
+      "render_sha256": "6b00cdb0850eeaa3e1296ce37cfeb6cea04eb5ebf5cb6a0486742df4ee5b7973",
+      "graph_sha256": "d39f35dac1ea8f673077d8a838f3277cd83f7a973eb7e9339f11398d2a2a5bce"
+    }
+  ],
+  "interface": {
+    "passed": 125,
+    "failed": 0,
+    "skipped": 0,
+    "log_sha256": "cd53612f2383f76dc6de88a2fe211bc7ece0502fc6ad053cb9a6c1dc46ee8b9d",
+    "build_passed": true,
+    "build_log_sha256": "64568900f6ea964877a24d341e8e319a40168f6f0dd2e88e04ff982ad0682698"
+  },
+  "native": {
+    "passed": 25,
+    "failed": 0,
+    "ignored": 0,
+    "command": "cargo test --locked --manifest-path src-tauri/Cargo.toml -j 1 --test bounded_regions --test source_timing --test retime -- --test-threads=1 --nocapture",
+    "log_sha256": "61c681c3aca3e168c5d986041bf5e76025b667f8d164533cf027035af3573704",
+    "runner_sha256": "c8c8af7a1275bd177f6343bf2085304628b41271ffb3015e3bb5abae5e7136a4",
+    "frozen_manifest_sha256": "71e4a203b12fb135f65cf890da682401ef41611b1f2b7d0c146e859a987c12de",
+    "source_tools_unchanged": true,
+    "no_active_bundled_media_children": true,
+    "seconds_correctness_only": 122.7928261
+  },
+  "previous_evidence_unchanged": {
+    "retiming.json": "664dc3921ef85d02b07fefbec9ebf63141e1486ce6a6589fb5e7dae6c0128ce4",
+    "preview-continuity.json": "da22e3ec817b051b100c201f309bef149b5110200cd524d58f303749c86dc8ec",
+    "preview-regions.json": "99c5260972af0067b8edcf2b192506a210f8a7a470a4a2894fff9ac219880d68",
+    "initial-video-timestamps.json": "96d825b774ef83a883b39c37d255e9c1af85b72e1d2a126f2aafb83d1383514e"
+  },
+  "retained_attempts": [
+    {
+      "kind": "Verifier requested unsupported 90px preview height before rendering; corrected to supported 120px.",
+      "cases": 0,
+      "verified": false,
+      "raw_sha256": "c2b039e13e274e20172939631fa4414e21cb214daba0e7b158c41a5065081326",
+      "helper_sha256": "a410214adc97581546484dcf642ae1dcf06978b0f65c7ddc8716330f641cfc41"
+    },
+    {
+      "kind": "Intermediate narrower passing matrix retained before split/padding/fractional cases were added.",
+      "cases": 13,
+      "verified": true,
+      "raw_sha256": "60023521ca3c9baa38ae70e44b287a1997871cece326b25a7607b206dd639478"
+    }
+  ],
+  "limits": [
+    "Coarse pre-effect mono source peaks; source-bin width/speed plus display bucket bounds timing precision.",
+    "No native window, display/focus/pointer-capture verification or audio device output.",
+    "No playback/scrubbing performance benchmark, installer update or publication.",
+    "Existing sharp-pulse AAC fidelity failure and legacy split float diagnostics remain separate."
+  ]
+}

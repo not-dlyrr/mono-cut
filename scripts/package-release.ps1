@@ -3,7 +3,7 @@
 # Run with PowerShell 7; expected hashes come from the reviewed build/source inputs.
 [CmdletBinding()]
 param(
-    [ValidateSet('0.1.0', '0.1.1')][string]$Version = '0.1.0',
+    [ValidateSet('0.1.0', '0.1.1', '0.1.2')][string]$Version = '0.1.0',
     [string]$Tag = 'v0.1.0',
     [Parameter(Mandatory)][string]$InstallerPath,
     [Parameter(Mandatory)][ValidatePattern('^[a-fA-F0-9]{64}$')][string]$InstallerSha256,

@@ -76,5 +76,17 @@ and retained notices are in `licenses/Open-WebView2-Loader.txt`. The loader call
 the installed runtime's internal creation entry point; that ABI is not a
 documented stable Microsoft API and requires revalidation after runtime changes.
 
+## Optional validation prerequisites
+
+The silent media verification scripts use Python and NumPy; neither is bundled
+with Mono Cut or required to run the editor. The recorded capture used Python
+3.14.5 and NumPy 2.4.6. Python retains its PSF license and historical notices.
+The installed NumPy distribution declares
+`BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0` and retains its component
+license texts in its distribution's `licenses/` directory. Its source is available
+from [NumPy](https://github.com/numpy/numpy); Python source is available from
+[CPython](https://github.com/python/cpython). The application does not redistribute
+their wheels or runtimes.
+
 When redistributing a changed binary, regenerate the inventory, retain the
 notices and provide its exact corresponding source and build configuration.

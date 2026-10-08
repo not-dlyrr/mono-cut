@@ -1,17 +1,17 @@
-export interface PlaybackAssets { previewPath: string | null; sourcePath: string | null }
+export interface PlaybackAssets { previewPath: string | null; sourcePath: string | null; successorPreviewPath?: string | null }
 
 /** Serialize native pin updates and omit queued snapshots already superseded by the UI. */
 export class PlaybackAssetQueue {
   private latest: PlaybackAssets = { previewPath: null, sourcePath: null };
   private revision = 0;
-  private tail: Promise<void> = Promise.resolve();
+  private tail: Promise<boolean> = Promise.resolve(false);
 
   constructor(private write: (assets: PlaybackAssets) => Promise<void>, private report: (error: unknown) => void = () => {}) {}
 
-  update(assets: PlaybackAssets, force = false): Promise<void> {
-    if (!force && assets.previewPath === this.latest.previewPath && assets.sourcePath === this.latest.sourcePath) return this.tail;
+  update(assets: PlaybackAssets, force = false): Promise<boolean> {
+    if (!force && assets.previewPath === this.latest.previewPath && assets.sourcePath === this.latest.sourcePath && assets.successorPreviewPath === this.latest.successorPreviewPath) return this.tail;
     this.latest = { ...assets }; const revision = ++this.revision, snapshot = { ...assets };
-    this.tail = this.tail.then(async () => { if (revision === this.revision) await this.write(snapshot); }).catch(error => { if (revision === this.revision) this.report(error); });
+    this.tail = this.tail.then(async () => { if (revision !== this.revision) return false; await this.write(snapshot); return true; }).catch(error => { if (revision === this.revision) this.report(error); return false; });
     return this.tail;
   }
 }

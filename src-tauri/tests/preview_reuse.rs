@@ -182,6 +182,104 @@ fn first_pixel(ctx: &MediaContext, path: &Path) -> [u8; 3] {
 }
 
 #[test]
+fn native_preview_job_and_diagnostic_plan_execute_the_same_versioned_encoding_profile() {
+    use mono_cut_lib::preview;
+    let dir = TempDir::new().unwrap();
+    let ctx = context(dir.path());
+    let source = dir.path().join("profile-source.mkv");
+    fixture(&ctx, &source, "red", 2);
+    let mut p = project(&ctx, &source, 60);
+    // Program previews ignore the export range in both executable and diagnostic paths.
+    p.in_point = Some(10);
+    p.out_point = Some(50);
+    let manager = job_manager(&ctx);
+    for (tag, region) in [
+        ("full", None),
+        (
+            "region",
+            Some(PreviewRegion {
+                start_frame: 20,
+                end_frame: 50,
+            }),
+        ),
+    ] {
+        let native = match &region {
+            Some(region) => manager.preview_region(p.clone(), 121, false, region.clone()),
+            None => manager.preview(p.clone(), 121, false),
+        }
+        .unwrap();
+        let native = complete(&manager, &native);
+        let actual = fs::read(native.path.as_ref().unwrap()).unwrap();
+        // x264 writes its effective encoder configuration into a user-data SEI.
+        // Inspect the native worker's MP4, rather than trusting intended settings.
+        let prefix = b"options: ";
+        let offset = actual
+            .windows(prefix.len())
+            .position(|bytes| bytes == prefix)
+            .expect("Native preview contains no x264 options SEI")
+            + prefix.len();
+        let end = actual[offset..].iter().position(|byte| *byte == 0).unwrap();
+        let sei = String::from_utf8_lossy(&actual[offset..offset + end]);
+        for expected in ["crf=20.0", "keyint=15", "scenecut=0"] {
+            assert!(
+                sei.split_ascii_whitespace().any(|token| token == expected),
+                "Native {tag} preview effective profile is missing {expected}: {sei}"
+            );
+        }
+        let diagnostic = ctx.cache_dir.join(format!("diagnostic-profile-{tag}.mp4"));
+        let plan = preview::compile(
+            &ctx,
+            &p,
+            121,
+            false,
+            &diagnostic,
+            &format!("diagnostic-profile-{tag}"),
+            region.as_ref(),
+            None,
+        )
+        .unwrap();
+        let argument =
+            |flag: &str| &plan.args[plan.args.iter().position(|arg| arg == flag).unwrap() + 1];
+        assert_eq!(argument("-crf"), "20");
+        assert_eq!(argument("-g"), "15");
+        assert_eq!(argument("-keyint_min"), "15");
+        assert_eq!(argument("-sc_threshold"), "0");
+        assert_eq!(plan.output_frames, if region.is_some() { 30 } else { 60 });
+        media::run_ffmpeg(&ctx, &plan.args).unwrap();
+        assert_eq!(
+            actual,
+            fs::read(&diagnostic).unwrap(),
+            "Diagnostic {tag} plan and actual native preview produce different MP4 bytes"
+        );
+        let key = native.preview_key.as_ref().unwrap();
+        assert!(preview::cached_region(&ctx, &p, 121, key, region.as_ref()).is_some());
+        let manifest_path = ctx.cache_dir.join(format!("preview-{key}.json"));
+        let original = fs::read(&manifest_path).unwrap();
+        for recipe in [
+            "program-preview-v3-regions",
+            "program-preview-v4-regions-profile",
+            "program-preview-v5-regions-filter-eof",
+            "program-preview-v6-regions-initial-clock",
+            "program-preview-v7-regions-mix-precision",
+        ] {
+            let mut prior_recipe: Value = serde_json::from_slice(&original).unwrap();
+            prior_recipe["recipe"] = json!(recipe);
+            fs::write(&manifest_path, serde_json::to_vec(&prior_recipe).unwrap()).unwrap();
+            assert!(
+                preview::cached_region(&ctx, &p, 121, key, region.as_ref()).is_none(),
+                "Prior region recipe {recipe} was accepted after the profile/decode-policy correction"
+            );
+        }
+        fs::write(&manifest_path, original).unwrap();
+        eprintln!("VERIFIED actual native {tag} MP4 SEI: CRF20, keyint15, scenecut0; diagnostic plan MP4 byte-exact; prior region recipe rejected.");
+    }
+    assert_eq!(p.in_point, Some(10));
+    assert_eq!(p.out_point, Some(50));
+    manager.shutdown();
+    assert_eq!(ctx.processes.active_count(), 0);
+}
+
+#[test]
 fn completed_previews_reuse_across_metadata_edits_save_reopen_and_history_without_spawning() {
     let dir = TempDir::new().unwrap();
     let ctx = context(dir.path());
@@ -1006,6 +1104,8 @@ fn clearing_an_empty_program_releases_completed_retention_after_playback_acknowl
         .set_modified(std::time::UNIX_EPOCH + Duration::from_secs(86400))
         .unwrap();
     let manifest = mono_cut_lib::preview::Manifest {
+        region: None,
+        origin: Rational::zero(),
         recipe: mono_cut_lib::preview::RECIPE.into(),
         key: key.clone(),
         file: output.file_name().unwrap().to_string_lossy().into_owned(),

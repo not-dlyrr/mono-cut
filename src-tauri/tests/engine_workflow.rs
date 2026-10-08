@@ -436,7 +436,12 @@ fn effects_keyframes_titles_and_explicit_frame_rate_conversion() {
     let mut store = setup(dir.path(), &ctx, &source);
     let p = store.get();
     let clip = p.clips[0].id.clone();
-    store.apply(EditCommand::UpdateClip{id:clip.clone(),patch:json!({"speed":{"num":5,"den":4},"duration":36,"fade_in":6,"fade_out":6,"brightness":0.05,"contrast":1.1,"saturation":0.8,"transform":{"scale":0.8,"rotation":12.0,"crop_left":0.05,"crop_right":0.05},"keyframes":[{"property":"opacity","frame":0,"value":0.2},{"property":"opacity","frame":35,"value":1.0},{"property":"volume","frame":0,"value":0.5},{"property":"volume","frame":35,"value":0.8},{"property":"x","frame":0,"value":-10.0},{"property":"x","frame":35,"value":10.0},{"property":"scale","frame":0,"value":0.8},{"property":"scale","frame":35,"value":1.0}]})},&ctx).unwrap();
+    // This effects test retains its legacy fixed-duration render fixture. The
+    // actual retime command, history, and retained interval are tested separately.
+    let mut legacy=p.clone();legacy.clips[0].speed=Rational::new(5,4);legacy.clips[0].render_offset=None;
+    let legacy_path=dir.path().join("legacy-effects.monocut");
+    mono_cut_lib::storage::write_atomic(&legacy_path,&legacy).unwrap();store.open(&legacy_path).unwrap();
+    store.apply(EditCommand::UpdateClip{id:clip.clone(),patch:json!({"duration":36,"fade_in":6,"fade_out":6,"brightness":0.05,"contrast":1.1,"saturation":0.8,"transform":{"scale":0.8,"rotation":12.0,"crop_left":0.05,"crop_right":0.05},"keyframes":[{"property":"opacity","frame":0,"value":0.2},{"property":"opacity","frame":35,"value":1.0},{"property":"volume","frame":0,"value":0.5},{"property":"volume","frame":35,"value":0.8},{"property":"x","frame":0,"value":-10.0},{"property":"x","frame":35,"value":10.0},{"property":"scale","frame":0,"value":0.8},{"property":"scale","frame":35,"value":1.0}]})},&ctx).unwrap();
     store
         .apply(
             EditCommand::AddTrack {

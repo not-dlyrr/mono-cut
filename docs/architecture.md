@@ -14,7 +14,12 @@ fallback that simulates editing or exports.
 | `render.rs` | Shared filter-graph compiler for preview and final export |
 | `jobs.rs` | Bounded background FFmpeg jobs, progress and cancellation |
 | `preview.rs` | Render identities, completed-preview records and retention |
+| `audio_clock.rs` | Unreleased sample-clock caches and bounded audio preparation |
+| `video_seek.rs` | Unreleased initial packet-PTS assessment, bounded classification cache and source-specific seek fallback |
 | `lib.rs` | Tauri command boundary, managed state, events and resource paths |
+| `programPreview.ts` | Unreleased two-stage region requests, stale-result rejection and coverage |
+| `programTransport.ts` | Signed transport intent and guarded resume across prepared regions |
+| `monitorLifecycle.ts` | Current-media event, play-promise and playback-clock guards |
 | `src/` | Native command-driven interface, monitor playback and timeline input |
 
 ## Time and editing
@@ -26,19 +31,54 @@ then enters history; errors leave the live project unchanged. Undo history keeps
 100 states. Mixed input frame rates are converted explicitly to sequence fps in
 the renderer and then to the requested export fps.
 
+Unreleased `retime_clip` plans linked changes on a copy and preserves an exact
+source span. The integer duration is its floor projection at the requested
+speed; canonical source-relative envelopes and the source conversion origin
+survive repeated requests, cuts and trims. Ordering anchors stay on the original
+timeline clock. New/increased overlaps and invalid explicit ranges reject the
+transaction. See [retiming](retiming.md) for rounding, native command compatibility
+and verification scope.
+
 ## Rendering and playback
 
 The renderer produces one FFmpeg graph for video composition and audio mixing.
 It trims sources, applies speed, fps conversion, crop, scale, rotation, color,
 opacity/keyframes and fades, then composites video tracks over a neutral black
 base. Audio is resampled, speed adjusted, faded, delayed in sample units and
-mixed with a limiter. Export and program preview call this same compiler.
+mixed with a limiter. Base audio and each post-gain branch explicitly use DBLP
+before mixing, preventing inactive clips from changing accumulator precision
+between full renders and bounded previews. Pre-gain FLTP and static float gain
+remain fixed. Preview recipe v8 invalidates older program-preview cache entries.
+It also resets post-trim sample PTS directly with `N` under the explicit sample
+timebase, avoiding divided-double truncation that could change automation gain.
+The retained v7 precision record is historical; the new inherited-fade sample
+clock counterexample and correction are in [retiming](retiming.md).
+Export and program preview call this same compiler.
 Cuts retain source conversion clocks and independent fade anchors. Pixel filters
 use a stable canvas before animated scale; layer ordering survives fragmentation.
 Audio gain evaluates per sample on the shared ceil placement/range grid. See
 [cuts and inherited envelopes](split-envelopes.md) for exact semantics.
 Preview may choose proxies and a smaller output resolution; final export uses
 original media.
+
+Unreleased source requests exact global regions through the same compiler. A
+production controller prepares one frame, then five seconds of playback;
+ordinary contributing video uses optimized seeks and filter EOF. Missing initial
+packet PTS instead requires explicit origin-prefix decoding, whose cost grows
+with source trim/playhead. A capped, cancellable assessment checks the first 256
+selected packets of the physical original or proxy; it does not certify later
+timestamps. Sample-clock preparation
+preserves audio phase across packet timestamp rounding. See
+[bounded preview architecture and validation](preview-regions.md) for exact
+coordinates, cache limits, timing endpoints and exceptions. Independent review
+accepts the tested Stage 4B prepared-region clock/readiness scope: lossless RGB
+and PCM coverage are exact, and matching float-PCM AAC controls identify the
+sharp-pulse residual downstream of correct timeline samples. Its strict
+AAC-versus-FLAC RMS 0.003 diagnostic still fails; native playback, every source
+clock and universal codec fidelity are outside that acceptance. See
+[initial video timestamp correction](initial-video-timestamps.md) for the
+evidence and limits. The following complete-sequence behavior describes the
+published 0.1.1 installer.
 
 The 0.1 playback implementation renders a timeline preview MP4 on background
 workers and plays/seeks that cached file through the native webview media element.
@@ -77,6 +117,18 @@ protect active worker and playback files; protected assets may exceed retention
 targets. Preview requests coalesce by render identity and reject stale interface
 keys. See [preview scheduling and reuse](preview-cache.md) for fingerprint,
 manifest validation, cancellation and adoption semantics.
+
+Unreleased forward preview maintains two persistent media nodes: the current
+region and one adjoining successor. A completed file is a candidate; actual
+media readiness requires the matching loaded source, generation, duration and
+`canplay` state. Current and successor consuming pins survive until their nodes
+are detached. Loaded promotion preserves the candidate node and local time zero,
+then native pin transfer must be acknowledged before a third preparation starts.
+The signed transport continues across ready coverage; it waits at an uncovered
+boundary and resumes only its own still-current request. Ordered cancellation
+uses session/revision tombstones so held admissions cannot revive after Stop.
+See [continuity](preview-continuity.md) for silent helper/file measurements and
+the separate native display/audio observation limit.
 
 ## Portability and trust boundaries
 

@@ -1,3 +1,4 @@
+pub mod audio_clock;
 pub mod edit;
 pub mod jobs;
 pub mod media;
@@ -6,10 +7,11 @@ pub mod preview;
 pub mod processes;
 pub mod render;
 pub mod storage;
+pub mod video_seek;
 
 use jobs::{JobManager, PreviewIntent};
 use media::MediaContext;
-use model::{Capabilities, EditCommand, ExportSettings, Job, Project, Rational};
+use model::{Capabilities, EditCommand, ExportSettings, Job, PreviewRegion, Project, Rational};
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
@@ -122,21 +124,39 @@ async fn render_preview(
     use_proxies: bool,
     expected_key: Option<String>,
     intent: Option<PreviewIntent>,
+    region: Option<PreviewRegion>,
     state: State<'_, EditorState>,
 ) -> Result<Job, String> {
     let jobs = state.jobs.clone();
     let store = state.store.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let project = store.lock().map_err(|_| "Project state unavailable")?.get();
-        match intent {
-            Some(intent) => jobs.preview_for_intent(
+        match (intent, region) {
+            (Some(intent), Some(region)) => jobs.preview_region_for_intent(
+                project,
+                height,
+                use_proxies,
+                region,
+                expected_key.as_deref(),
+                &intent,
+            ),
+            (None, Some(region)) => jobs.preview_region_checked(
+                project,
+                height,
+                use_proxies,
+                region,
+                expected_key.as_deref(),
+            ),
+            (Some(intent), None) => jobs.preview_for_intent(
                 project,
                 height,
                 use_proxies,
                 expected_key.as_deref(),
                 &intent,
             ),
-            None => jobs.preview_checked(project, height, use_proxies, expected_key.as_deref()),
+            (None, None) => {
+                jobs.preview_checked(project, height, use_proxies, expected_key.as_deref())
+            }
         }
     })
     .await
@@ -147,12 +167,21 @@ fn begin_preview_session(state: State<EditorState>) -> u64 {
     state.jobs.begin_preview_session()
 }
 #[tauri::command]
+fn cancel_preview_intent(
+    session: u64,
+    revision: u64,
+    state: State<EditorState>,
+) -> Result<(), String> {
+    state.jobs.cancel_preview_intent(session, revision)
+}
+#[tauri::command]
 async fn set_preview_intent(
     height: u32,
     use_proxies: bool,
     expected_key: String,
     session: u64,
     revision: u64,
+    region: Option<PreviewRegion>,
     state: State<'_, EditorState>,
 ) -> Result<PreviewIntent, String> {
     let jobs = state.jobs.clone();
@@ -161,7 +190,11 @@ async fn set_preview_intent(
         // Keep the store snapshot current through publication, so a queued RPC
         // cannot publish a project state that Undo has already replaced.
         let store = store.lock().map_err(|_| "Project state unavailable")?;
-        let key = jobs.preview_identity(&store.get(), height, use_proxies)?;
+        let project = store.get();
+        let key = match region.as_ref() {
+            Some(region) => jobs.preview_region_identity(&project, height, use_proxies, region)?,
+            None => jobs.preview_identity(&project, height, use_proxies)?,
+        };
         if key != expected_key {
             return Err(
                 "PREVIEW_IDENTITY_CHANGED: The current program differs from this intent.".into(),
@@ -176,17 +209,18 @@ async fn set_preview_intent(
 async fn preview_identity(
     height: u32,
     use_proxies: bool,
+    region: Option<PreviewRegion>,
     state: State<'_, EditorState>,
 ) -> Result<serde_json::Value, String> {
-    let jobs = state.jobs.clone();
     let store = state.store.clone();
     let ctx = state.ctx.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let project = store.lock().map_err(|_| "Project state unavailable")?.get();
-        let key = jobs.preview_identity(&project, height, use_proxies)?;
-        let cached_path = preview::cached(&ctx, &project, height, &key)
+        let key = preview::identity_region(&ctx, &project, height, use_proxies, region.as_ref())?;
+        let program_key = preview::identity(&ctx, &project, height, use_proxies)?;
+        let cached_path = preview::cached_region(&ctx, &project, height, &key, region.as_ref())
             .map(|path| path.to_string_lossy().into_owned());
-        Ok(serde_json::json!({"key":key,"cached_path":cached_path}))
+        Ok(serde_json::json!({"key":key,"program_key":program_key,"cached_path":cached_path,"region":region}))
     })
     .await
     .map_err(|e| e.to_string())?
@@ -195,6 +229,7 @@ async fn preview_identity(
 fn set_playback_assets(
     preview_path: Option<String>,
     source_path: Option<String>,
+    successor_preview_path: Option<String>,
     state: State<EditorState>,
 ) -> Result<(), String> {
     if preview_path.is_none() {
@@ -203,9 +238,10 @@ fn set_playback_assets(
             state.jobs.clear_preview();
         }
     }
-    state.jobs.set_playback_assets(
+    state.jobs.set_playback_assets_with_successor(
         preview_path.map(PathBuf::from),
         source_path.map(PathBuf::from),
+        successor_preview_path.map(PathBuf::from),
     )
 }
 #[tauri::command]
@@ -375,6 +411,7 @@ pub fn run() {
             import_media,
             render_preview,
             begin_preview_session,
+            cancel_preview_intent,
             set_preview_intent,
             preview_identity,
             set_playback_assets,

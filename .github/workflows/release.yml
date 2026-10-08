@@ -5,9 +5,10 @@ on:
       version_tag:
         description: Existing reviewed release tag
         required: true
-        default: v0.1.1
+        default: v0.1.2
         type: choice
         options:
+          - v0.1.2
           - v0.1.1
           - v0.1.0
 permissions:
@@ -22,7 +23,7 @@ jobs:
       - name: Validate requested version
         shell: pwsh
         run: |
-          if (@('v0.1.0', 'v0.1.1') -cnotcontains $env:RELEASE_TAG) { throw 'This workflow accepts the reviewed v0.1.0 or v0.1.1 release tags only.' }
+          if (@('v0.1.0', 'v0.1.1', 'v0.1.2') -cnotcontains $env:RELEASE_TAG) { throw 'This workflow accepts the reviewed v0.1.0, v0.1.1 or v0.1.2 release tags only.' }
           "RELEASE_VERSION=$($env:RELEASE_TAG.Substring(1))" >> $env:GITHUB_ENV
           # Retained upstream license texts have byte-level SHA-256 pins.
           git config --global core.autocrlf false

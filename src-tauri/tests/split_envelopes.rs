@@ -704,7 +704,9 @@ fn fractional_sequence_split_boundaries_preserve_every_sample_and_inherited_gain
     for (start, source_in, speed) in [(0, 0, 1), (7, 5, 1), (7, 5, 2)] {
         let mut p = fractional_project(&ctx, &source, start, source_in, 60);
         let clip = p.clips[0].id.clone();
-        patch(&mut p, &clip, json!({"speed":{"num":speed,"den":1}}));
+        // Preserve the legacy fixed-duration renderer fixture at this rate.
+        p.clips[0].speed=Rational::new(speed,1); p.clips[0].render_offset=None;
+        p.validate().unwrap();
         let before = render_av(
             &ctx,
             &p,

@@ -1,3 +1,5 @@
+import { sameRegion, type PreviewRegion } from './previewRegion';
+
 export interface PreviewJob {
   id: string;
   kind: string;
@@ -6,9 +8,10 @@ export interface PreviewJob {
   path: string | null;
   error: string | null;
   preview_key?: string | null;
+  preview_region?: PreviewRegion | null;
 }
 export interface IdentityTicket { revision: number; serial: number; readySerial: number }
-export interface RenderTicket { revision: number; serial: number; key: string }
+export interface RenderTicket { revision: number; serial: number; key: string; region?: PreviewRegion | null }
 
 /** A late running response must never undo an earlier completion event. */
 export function mergePreviewJob<T extends PreviewJob>(previous: T | undefined, next: T): T {
@@ -31,13 +34,20 @@ export class PreviewScheduler {
   private ready: PreviewJob | null = null;
   private hasClips = false;
   private events = new Map<string, PreviewJob>();
+  private region: PreviewRegion | null = null;
 
   get expectedKey() { return this.key; }
   get activeJobId() { return this.activeId; }
   get contextRevision() { return this.revision; }
 
-  observe(descriptor: string, hasClips: boolean): boolean {
-    if (this.descriptor === descriptor && this.hasClips === hasClips) return false;
+  /** A failed validation invalidates active replies while retaining a candidate for future cache checks. */
+  invalidate(): void {
+    this.revision += 1; this.identitySerial += 1; this.key = null; this.activeId = null; this.pending = null;
+  }
+
+  observe(descriptor: string, hasClips: boolean, region: PreviewRegion | null = null): boolean {
+    if (this.descriptor === descriptor && this.hasClips === hasClips && sameRegion(this.region, region)) return false;
+    this.region = region;
     this.descriptor = descriptor; this.hasClips = hasClips; this.revision += 1;
     this.identitySerial += 1; this.key = null; this.activeId = null; this.pending = null;
     if (!hasClips) this.ready = null;
@@ -48,9 +58,13 @@ export class PreviewScheduler {
   resetProject(): void {
     this.descriptor = null; this.revision += 1; this.identitySerial += 1;
     this.key = null; this.activeId = null; this.pending = null; this.ready = null; this.hasClips = false;
+    this.region = null;
   }
 
   beginIdentity(): IdentityTicket { return { revision: this.revision, serial: ++this.identitySerial, readySerial: this.readySerial }; }
+  /** Stop supersedes even a native render admission whose reply has not arrived. */
+  cancelIntent(): number { this.invalidate(); return this.identitySerial; }
+  forgetReady(): void { this.ready = null; this.readySerial += 1; }
   isCurrentIdentity(ticket: IdentityTicket): boolean { return ticket.revision === this.revision && ticket.serial === this.identitySerial; }
   isCurrentContext(revision: number): boolean { return revision === this.revision; }
 
@@ -65,20 +79,20 @@ export class PreviewScheduler {
     if (changed) { this.key = key; this.activeId = null; this.pending = null; }
     const cacheInvalidated = this.ready?.preview_key === key && this.ready.path !== cachedPath;
     if (cacheInvalidated) { this.ready = null; this.activeId = null; }
-    const ready = this.hasClips && this.ready?.preview_key === key && this.ready.path === cachedPath ? this.ready : null;
+    const ready = this.hasClips && this.ready?.preview_key === key && this.ready.path === cachedPath && sameRegion(this.ready.preview_region, this.region) ? this.ready : null;
     if (ready) this.activeId = ready.id;
     return { changed, cacheInvalidated, recheck: false, ready };
   }
 
   needsRender(): boolean {
-    if (!this.hasClips || !this.key || this.ready?.preview_key === this.key || this.pending) return false;
+    if (!this.hasClips || !this.key || (this.ready?.preview_key === this.key && sameRegion(this.ready.preview_region, this.region)) || this.pending) return false;
     const active = this.activeId ? this.events.get(this.activeId) : undefined;
     return !active || active.status !== 'running';
   }
 
   beginRender(): RenderTicket | null {
     if (!this.needsRender() || !this.key) return null;
-    const ticket = { revision: this.revision, serial: ++this.renderSerial, key: this.key };
+    const ticket = { revision: this.revision, serial: ++this.renderSerial, key: this.key, region: this.region };
     this.pending = ticket; this.activeId = null; return ticket;
   }
 
@@ -99,11 +113,11 @@ export class PreviewScheduler {
   }
 
   canApply(job: PreviewJob): boolean {
-    return this.hasClips && !!this.key && job.kind === 'preview' && job.id === this.activeId && job.preview_key === this.key;
+    return this.hasClips && !!this.key && job.kind === 'preview' && job.id === this.activeId && job.preview_key === this.key && sameRegion(job.preview_region, this.region);
   }
 
   receiveResponse(ticket: RenderTicket, job: PreviewJob): PreviewJob | null {
-    if (!this.isCurrentRender(ticket) || job.kind !== 'preview' || job.preview_key !== ticket.key) return null;
+    if (!this.isCurrentRender(ticket) || job.kind !== 'preview' || job.preview_key !== ticket.key || !sameRegion(job.preview_region, ticket.region)) return null;
     this.pending = null; this.activeId = job.id;
     const merged = this.record(job); return this.canApply(merged) ? merged : null;
   }

@@ -2,6 +2,7 @@
 use crate::{
     media::{self, MediaContext},
     model::*,
+    render,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -11,10 +12,11 @@ use std::{
     fs,
     io::Read,
     path::{Path, PathBuf},
+    sync::{atomic::AtomicBool, Arc},
     time::{SystemTime, UNIX_EPOCH},
 };
 
-pub const RECIPE: &str = "program-preview-v2";
+pub const RECIPE: &str = "program-preview-v8-regions-integer-sample-clock";
 pub const MAX_ENTRIES: usize = 32;
 pub const MAX_BYTES: u64 = 512 * 1024 * 1024;
 
@@ -62,12 +64,75 @@ pub fn settings(p: &Project, height: u32) -> Result<ExportSettings, String> {
         height,
         fps: p.fps,
         codec: "h264".into(),
-        crf: 22,
+        crf: 20,
         audio_bitrate: 160,
         sample_rate: p.sample_rate,
     };
     crate::render::validate_settings(&result)?;
     Ok(result)
+}
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct EncodingProfile {
+    pub gop_frames: u32,
+    pub keyint_min_frames: u32,
+    pub scene_cut_threshold: u32,
+}
+pub fn encoding_profile(p: &Project) -> EncodingProfile {
+    let interval =
+        ((p.fps.num as i128 + p.fps.den as i128 * 2 - 1) / (p.fps.den as i128 * 2)).max(1) as u32;
+    EncodingProfile {
+        gop_frames: interval,
+        keyint_min_frames: interval,
+        scene_cut_threshold: 0,
+    }
+}
+/// The executable preview profile is shared by native jobs and diagnostics.
+/// Export settings and the shared renderer remain independent of this profile.
+pub fn compile(
+    ctx: &MediaContext,
+    project: &Project,
+    height: u32,
+    use_proxies: bool,
+    output: &Path,
+    job_id: &str,
+    region: Option<&PreviewRegion>,
+    cancel: Option<&Arc<AtomicBool>>,
+) -> Result<render::RenderPlan, String> {
+    let mut p = project.clone();
+    p.in_point = None;
+    p.out_point = None;
+    let settings = settings(&p, height)?;
+    let mut plan = match (region, cancel) {
+        (Some(region), Some(cancel)) => render::compile_region_cancelled(
+            ctx,
+            &p,
+            &settings,
+            use_proxies,
+            output,
+            job_id,
+            region,
+            cancel,
+        )?,
+        (Some(region), None) => {
+            render::compile_region(ctx, &p, &settings, use_proxies, output, job_id, region)?
+        }
+        (None, _) => render::compile(ctx, &p, &settings, use_proxies, output, job_id)?,
+    };
+    // Preserve the existing half-second preview GOP, bounding seek decoding.
+    let profile = encoding_profile(&p);
+    let before_output = plan.args.len() - 1;
+    plan.args.splice(
+        before_output..before_output,
+        [
+            "-g".into(),
+            profile.gop_frames.to_string(),
+            "-keyint_min".into(),
+            profile.keyint_min_frames.to_string(),
+            "-sc_threshold".into(),
+            profile.scene_cut_threshold.to_string(),
+        ],
+    );
+    Ok(plan)
 }
 /// Preserve all non-metadata fields, including future additive render fields.
 pub fn descriptor(p: &Project, use_proxies: bool) -> Value {
@@ -130,13 +195,68 @@ pub fn source_paths(p: &Project, use_proxies: bool) -> Vec<PathBuf> {
     paths.dedup();
     paths
 }
+/// A cheap admission guard for requests delayed behind cancellation or another
+/// request. It reads filesystem metadata only, including potential proxy paths,
+/// without hashing media or changing the render-equivalence key.
+pub fn input_stamp_snapshot(
+    ctx: &MediaContext,
+    p: &Project,
+    use_proxies: bool,
+) -> Vec<(PathBuf, Option<FileStamp>)> {
+    let used: HashSet<_> = p
+        .clips
+        .iter()
+        .filter_map(|c| c.media_id.as_deref())
+        .collect();
+    let mut paths = vec![
+        ctx.ffmpeg.clone(),
+        crate::video_seek::tool_path(ctx).unwrap_or_else(|_| ctx.ffprobe.clone()),
+    ];
+    for m in p.media.iter().filter(|m| used.contains(m.id.as_str())) {
+        paths.push(PathBuf::from(&m.path));
+        if use_proxies {
+            if let Some(proxy) = &m.proxy {
+                paths.push(PathBuf::from(proxy));
+            }
+        }
+    }
+    if p.clips.iter().any(|c| c.title.is_some()) {
+        paths.push(ctx.font.clone());
+    }
+    paths.sort();
+    paths.dedup();
+    paths
+        .into_iter()
+        .map(|path| {
+            let stamp = FileStamp::read(&path).ok();
+            (path, stamp)
+        })
+        .collect()
+}
+pub fn input_stamps_current(snapshot: &[(PathBuf, Option<FileStamp>)]) -> bool {
+    snapshot
+        .iter()
+        .all(|(path, stamp)| FileStamp::read(path).ok().as_ref() == stamp.as_ref())
+}
 pub fn identity(
     ctx: &MediaContext,
     p: &Project,
     height: u32,
     use_proxies: bool,
 ) -> Result<String, String> {
+    identity_region(ctx, p, height, use_proxies, None)
+}
+pub fn identity_region(
+    ctx: &MediaContext,
+    p: &Project,
+    height: u32,
+    use_proxies: bool,
+    region: Option<&PreviewRegion>,
+) -> Result<String, String> {
     p.validate()?;
+    if let Some(region) = region {
+        region.validate(p)?;
+    }
     let settings = settings(p, height)?;
     let stamps: Vec<_> = source_paths(p, use_proxies)
         .iter()
@@ -147,7 +267,7 @@ pub fn identity(
     } else {
         None
     };
-    let value = serde_json::json!({"recipe":RECIPE,"project":descriptor(p,use_proxies),"settings":settings,"proxies":use_proxies,"sources":stamps,"font":font,"ffmpeg":FileStamp::read(&ctx.ffmpeg).ok()});
+    let value = serde_json::json!({"recipe":RECIPE,"video_initial_clock_recipe":crate::video_seek::RECIPE,"project":descriptor(p,use_proxies),"settings":settings,"encoding_profile":encoding_profile(p),"proxies":use_proxies,"sources":stamps,"font":font,"ffmpeg":FileStamp::read(&ctx.ffmpeg).ok(),"ffprobe":crate::video_seek::tool_stamp(ctx).ok(),"region":region});
     Ok(format!(
         "{:x}",
         Sha256::digest(serde_json::to_vec(&value).map_err(|e| e.to_string())?)
@@ -165,6 +285,11 @@ pub struct Manifest {
     pub sample_rate: u32,
     pub frames: i64,
     pub duration: Rational,
+    #[serde(default)]
+    pub region: Option<PreviewRegion>,
+    /// Exact global sequence origin, independently checked against coverage.
+    #[serde(default = "Rational::zero")]
+    pub origin: Rational,
 }
 fn manifest_path(ctx: &MediaContext, key: &str) -> PathBuf {
     ctx.cache_dir.join(format!("preview-{key}.json"))
@@ -200,16 +325,32 @@ fn load(path: &Path) -> Option<Manifest> {
     serde_json::from_slice(&bytes).ok()
 }
 pub fn cached(ctx: &MediaContext, p: &Project, height: u32, key: &str) -> Option<PathBuf> {
+    cached_region(ctx, p, height, key, None)
+}
+pub fn cached_region(
+    ctx: &MediaContext,
+    p: &Project,
+    height: u32,
+    key: &str,
+    region: Option<&PreviewRegion>,
+) -> Option<PathBuf> {
     let manifest = load(&manifest_path(ctx, key))?;
     let settings = settings(p, height).ok()?;
+    if let Some(region) = region {
+        region.validate(p).ok()?;
+    }
+    let start = region.map(|r| r.start_frame).unwrap_or(0);
+    let end = region.map(|r| r.end_frame).unwrap_or(p.length());
     if manifest.recipe != RECIPE
         || manifest.key != key
         || manifest.width != settings.width
         || manifest.height != settings.height
         || manifest.fps != settings.fps
         || manifest.sample_rate != settings.sample_rate
-        || manifest.frames != p.length()
-        || manifest.duration != Rational::from_frames(p.length(), p.fps)
+        || manifest.frames != end - start
+        || manifest.duration != Rational::from_frames(end - start, p.fps)
+        || manifest.region.as_ref() != region
+        || manifest.origin != Rational::from_frames(start, p.fps)
     {
         return None;
     }
@@ -234,8 +375,19 @@ pub fn complete(
     key: &str,
     path: &Path,
 ) -> Result<(), String> {
-    if identity(ctx, p, height, use_proxies)? != key {
-        return Err("Preview source changed while rendering; refresh the preview.".into());
+    complete_region(ctx, p, height, use_proxies, key, path, None)
+}
+pub fn complete_region(
+    ctx: &MediaContext,
+    p: &Project,
+    height: u32,
+    use_proxies: bool,
+    key: &str,
+    path: &Path,
+    region: Option<&PreviewRegion>,
+) -> Result<(), String> {
+    if identity_region(ctx, p, height, use_proxies, region)? != key {
+        return Err("PREVIEW_IDENTITY_CHANGED: Preview source changed while rendering; refresh the preview.".into());
     }
     let settings = settings(p, height)?;
     let (actual, details) = media::probe_details(ctx, path)?;
@@ -256,13 +408,15 @@ pub fn complete(
     };
     let actual_frames = video.and_then(|stream| integer(&stream["nb_frames"]));
     let actual_sample_rate = audio.and_then(|stream| integer(&stream["sample_rate"]));
-    let expected = Rational::from_frames(p.length(), p.fps);
+    let start = region.map(|r| r.start_frame).unwrap_or(0);
+    let end = region.map(|r| r.end_frame).unwrap_or(p.length());
+    let expected = Rational::from_frames(end - start, p.fps);
     if actual.width != settings.width
         || actual.height != settings.height
         || actual.fps.num as i128 * settings.fps.den as i128
             != settings.fps.num as i128 * actual.fps.den as i128
         || !actual.has_audio
-        || actual_frames != Some(p.length() as u64)
+        || actual_frames != Some((end - start) as u64)
         || actual_sample_rate != Some(settings.sample_rate as u64)
         || (actual.duration.value() - expected.value()).abs() > 0.1
     {
@@ -281,8 +435,10 @@ pub fn complete(
         height: settings.height,
         fps: settings.fps,
         sample_rate: settings.sample_rate,
-        frames: p.length(),
+        frames: end - start,
         duration: expected,
+        region: region.cloned(),
+        origin: Rational::from_frames(start, p.fps),
     };
     let destination = manifest_path(ctx, key);
     let temporary = destination.with_extension("json.tmp");

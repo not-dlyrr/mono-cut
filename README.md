@@ -19,6 +19,31 @@ The [publication record](docs/publication-validation.md) records verified public
 links, checksums and CI results. The [0.1.1 release record](docs/release-0.1.1.md)
 describes the portable display-fit correction and its package validation.
 
+Unreleased source adds bounded program-preview regions: a requested frame first,
+then five seconds of prepared playback. It now prepares one adjoining successor
+during forward playback and reuses its loaded monitor node at the boundary.
+See the [continuity record](docs/preview-continuity.md) for the implemented
+ownership rules, silent measurements and unverified native handoff limits.
+These changes are not included in the published 0.1.1 installer. Independent
+review accepted the tested Stage 4B clock/readiness correction; the
+[focused correction record](docs/initial-video-timestamps.md) retains explicit
+prefix-decoding costs and strict sharp-pulse codec-quality failures.
+
+Unreleased source also repairs **Speed** in both workspaces: a committed retime
+preserves the selected source interval, resizes linked picture/audio together,
+and rejects new overlaps. See [retiming](docs/retiming.md) for exact rounding,
+automation, project compatibility and silent verification scope.
+
+Unreleased source also corrects timeline waveforms to follow source-in, trims,
+slips and speed in both workspaces. Brief peaks survive bounded max aggregation.
+See [waveform timing and silent checks](docs/timeline-waveforms.md) for source-bin
+resolution, live gesture checks, actual media validation and remaining limits.
+
+Unreleased source also routes monitor shortcuts to the last activated Source or
+Program monitor in either workspace, with keyboard focus and an active header cue.
+See [monitor keyboard ownership](docs/monitor-keyboard.md) for target rules,
+remapping, controlled tests and native verification limits.
+
 ## Windows installation
 
 The Windows x64 release assets pair the installer with application, media and

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { Magnet, Minus, Plus, Scissors, Trash2, Copy, Link2, Unlink, Volume2, VolumeX, Eye, EyeOff, LockKeyhole, UnlockKeyhole, Flag, Type, MousePointer2, ArrowLeftRight, X } from 'lucide-react';
 import { IconButton, Menu } from './ui';
 import { endFrame, fpsValue, timecode, type Clip, type Edit, type Project } from './types';
+import { displayedClip, dragClipIds, timelineWaveform } from './timelineWaveform';
 
 interface Props { project: Project; frame: number; setFrame: (frame: number) => void; selected: string[]; setSelected: (ids: string[]) => void; edit: Edit; addTitle: () => void; addMarker: () => void; activeTrack: string | null; setActiveTrack: (id: string) => void; snap: boolean; setSnap: (v: boolean) => void; easy?: boolean }
 interface Drag { id: string; mode: 'move' | 'in' | 'out' | 'slip'; origin: number; delta: number; track: string; ids: string[] }
@@ -14,7 +15,12 @@ export default function Timeline({ project, frame, setFrame, selected, setSelect
   const step = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 1800].find(s => s * scale > 92) || 1800;
   const first = Math.floor(scroll.left / scale / step) * step, last = Math.ceil((scroll.left + scroll.width) / scale);
   const ticks = []; for (let n = first; n < last; n += step) ticks.push(n);
-  const visible = project.clips.filter(c => (c.start + c.duration) * scale >= scroll.left - 100 && c.start * scale <= scroll.left + scroll.width + 100);
+  const draggingIds = drag ? dragClipIds(project, drag) : new Set<string>();
+  const visible = project.clips.filter(c => { const p = displayedClip(c, draggingIds.has(c.id) ? drag : null); return draggingIds.has(c.id) || ((p.start + p.duration) * scale >= scroll.left - 100 && p.start * scale <= scroll.left + scroll.width + 100); });
+  const waveforms = useMemo(() => new Map(visible.map(c => {
+    const media = project.media.find(m => m.id === c.media_id), p = displayedClip(c, draggingIds.has(c.id) ? drag : null);
+    return [c.id, media ? timelineWaveform(media, c, project.fps, p.duration, scale, scroll.left - p.start * scale - 100, scroll.left + scroll.width - HEADER - p.start * scale + 100, p.sourceFrameOffset) : null];
+  })), [project, drag, scale, scroll.left, scroll.width]);
   function seek(e: PointerEvent) { const rect = e.currentTarget.getBoundingClientRect(); setFrame(Math.max(0, Math.round((e.clientX - rect.left) / scale))); }
   function snapped(value: number, ignoreIds: string[], duration = 0) {
     if (!snap) return value; const anchors = [0, frame, ...project.markers.map(m => m.frame), ...project.clips.filter(c => !ignoreIds.includes(c.id)).flatMap(c => [c.start, c.start + c.duration])];
@@ -47,17 +53,18 @@ export default function Timeline({ project, frame, setFrame, selected, setSelect
     if (d.mode === 'slip' && d.delta) void edit({ type: 'slip', id: d.id, delta: d.delta });
   }
   function drawClip(c: Clip, trackId: string) {
-    const media = project.media.find(m => m.id === c.media_id), d = drag && drag.ids.includes(c.id) ? drag : null;
-    const start = c.start + (d?.mode === 'move' || d?.mode === 'in' ? d.delta : 0), duration = c.duration + (d?.mode === 'out' ? d.delta : d?.mode === 'in' ? -d.delta : 0);
+    const media = project.media.find(m => m.id === c.media_id), d = drag && draggingIds.has(c.id) ? drag : null;
+    const { start, duration } = displayedClip(c, d);
     if (c.track_id !== trackId) return null;
     const anchorTrack = d && project.clips.find(clip => clip.id === d.id)?.track_id;
     const translate = d?.mode === 'move' && c.track_id === anchorTrack ? (tracks.findIndex(t => t.id === d.track) - tracks.findIndex(t => t.id === c.track_id)) * ROW : 0;
+    const wave = waveforms.get(c.id);
     return <div key={c.id} className={`timeline-clip ${selected.includes(c.id) ? 'selected' : ''} ${media?.kind === 'audio' ? 'audio' : ''} ${c.title !== null ? 'title-clip' : ''} ${media?.missing ? 'missing' : ''}`} style={{ left: start * scale, width: Math.max(5, duration * scale), transform: `translateY(${translate}px)`, zIndex: d ? 10 : undefined }} tabIndex={0} role="button" aria-label={`${c.name}, starts ${timecode(c.start, project.fps)}, ${c.duration} frames`}
       onFocus={() => setActiveTrack(c.track_id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(e.shiftKey ? [...selected.filter(id => id !== c.id), c.id] : [c.id]); } }}
       onPointerDown={e => begin(e, c, slipMode ? 'slip' : 'move')} onPointerMove={e => update(e, c)} onPointerUp={e => finish(e, c)} onPointerCancel={() => { dragRef.current = null; setDrag(null); }}>
       <div className="trim-handle in" aria-hidden="true" onPointerDown={e => begin(e, c, 'in')} onPointerMove={e => update(e, c)} onPointerUp={e => finish(e, c)} />
       <span className="clip-name">{c.title !== null && <Type size={12} />}{c.linked_id && <Link2 size={11} />}{c.name}</span>
-      {media && media.waveform.length > 0 && <svg className="waveform" viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true">{media.waveform.filter((_, i) => i % Math.max(1, Math.floor(media.waveform.length / 100)) === 0).slice(0, 100).map((v, i) => <line key={i} x1={i * 2} x2={i * 2} y1={12 - Math.max(1, v * 10)} y2={12 + Math.max(1, v * 10)} />)}</svg>}
+      {wave && wave.width > 0 && <svg className="waveform" style={{ left: wave.left, width: wave.width }} viewBox={`0 0 ${wave.width} 24`} preserveAspectRatio="none" aria-hidden="true">{wave.points.map((p, i) => <line key={i} x1={p.x} x2={p.x} y1={12 - Math.max(1, p.peak * 10)} y2={12 + Math.max(1, p.peak * 10)} />)}</svg>}
       {c.fade_in > 0 && <div className="fade-shape in" style={{ width: Math.min(duration * scale / 2, c.fade_in * scale) }} />}{c.fade_out > 0 && <div className="fade-shape out" style={{ width: Math.min(duration * scale / 2, c.fade_out * scale) }} />}
       <div className="trim-handle out" aria-hidden="true" onPointerDown={e => begin(e, c, 'out')} onPointerMove={e => update(e, c)} onPointerUp={e => finish(e, c)} />
     </div>;

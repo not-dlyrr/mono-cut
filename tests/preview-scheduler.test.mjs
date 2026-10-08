@@ -322,7 +322,8 @@ test('production bridge skips stale identity replies and does not publish their 
   const pendingIdentity = deferred(); let checks = 0;
   const state = bridgeFixture({ identity: async () => ++checks === 1 ? pendingIdentity.promise : { key: 'key-B', cached_path: null } });
   const old = state.bridge.check(settings); state.scheduler.observe('descriptor-B', true);
-  const current = await state.bridge.check(settings); pendingIdentity.resolve({ key: 'key-A', cached_path: null });
+  const currentCheck = state.bridge.check(settings); assert.equal(checks, 1, 'a pending newer identity waits for the native RPC slot');
+  pendingIdentity.resolve({ key: 'key-A', cached_path: null }); const current = await currentCheck;
   assert.equal(await old, null); assert.equal(current.intent.key, 'key-B');
   assert.deepEqual(state.calls.filter(call => call.command === 'set_preview_intent').map(call => call.intent.key), ['key-B']);
 });

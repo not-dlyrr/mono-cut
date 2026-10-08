@@ -69,6 +69,16 @@ fn snapshot_bytes(p: &Project) -> usize {
                     + c.name.len()
                     + c.title.as_ref().map(String::len).unwrap_or(0)
                     + c.keyframes.len() * std::mem::size_of::<Keyframe>()
+                    + c.retime
+                        .as_ref()
+                        .map(|r| {
+                            r.envelope
+                                .keyframes
+                                .iter()
+                                .map(|k| std::mem::size_of::<SourceKeyframe>() + k.property.len())
+                                .sum::<usize>()
+                        })
+                        .unwrap_or(0)
                     + c.composition
                         .as_ref()
                         .map(|origin| origin.group_id.len())

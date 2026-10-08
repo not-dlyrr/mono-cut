@@ -543,11 +543,13 @@ fn trims_splits_and_existing_speed_mapping_use_the_shared_source_clock() {
     }
     let mut fast = project(&ctx, &source, Rational::new(3, 10), 30, 45);
     let clip_id = fast.clips[0].id.clone();
+    // Keep the historical fixed-duration renderer fixture independent of retiming.
+    fast.clips[0].speed=Rational::new(2,1); fast.clips[0].render_offset=None;
     edit::apply(
         &mut fast,
         EditCommand::UpdateClip {
             id: clip_id,
-            patch: json!({"speed":{"num":2,"den":1},"duration":24}),
+            patch: json!({"duration":24}),
         },
     )
     .unwrap();
@@ -564,11 +566,12 @@ fn trims_splits_and_existing_speed_mapping_use_the_shared_source_clock() {
     for (name, cached_project, use_proxies) in &cached_variants {
         let mut cached_fast = cached_project.clone();
         let clip_id = cached_fast.clips[0].id.clone();
+        cached_fast.clips[0].speed=Rational::new(2,1); cached_fast.clips[0].render_offset=None;
         edit::apply(
             &mut cached_fast,
             EditCommand::UpdateClip {
                 id: clip_id,
-                patch: json!({"speed":{"num":2,"den":1},"duration":24}),
+                patch: json!({"duration":24}),
             },
         )
         .unwrap();
