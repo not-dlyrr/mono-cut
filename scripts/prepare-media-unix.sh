@@ -93,8 +93,11 @@ cmake -S "$BUILD_ROOT/zlib-1.3.2" -B "$BUILD_ROOT/zlib-build" -G Ninja \
   -DZLIB_BUILD_SHARED=OFF -DZLIB_BUILD_STATIC=ON -DZLIB_BUILD_TESTING=OFF
 cmake --build "$BUILD_ROOT/zlib-build" --parallel "$JOBS"
 cmake --install "$BUILD_ROOT/zlib-build"
-# FFmpeg checks the conventional -lz; zlib 1.3.2 calls the static archive zs.
-cp "$PREFIX/lib/libzs.a" "$PREFIX/lib/libz.a"
+# Native Unix zlib installs libz.a. Some targets name the static archive zs;
+# provide FFmpeg's conventional -lz only when that alias is actually needed.
+if [[ ! -f "$PREFIX/lib/libz.a" ]]; then
+  cp "$PREFIX/lib/libzs.a" "$PREFIX/lib/libz.a"
+fi
 
 cmake -S "$BUILD_ROOT/freetype-VER-2-14-1" -B "$BUILD_ROOT/ft-build" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="$CFLAGS" -DCMAKE_INSTALL_PREFIX="$PREFIX" \
