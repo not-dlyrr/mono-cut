@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "version": "0.1.2",
+  "verified_utc": "2026-10-08T20:54:56.197Z",
+  "repository": "https://github.com/not-dlyrr/mono-cut",
+  "public_repository": true,
+  "release": "https://github.com/not-dlyrr/mono-cut/releases/tag/v0.1.2",
+  "release_id": 407254111,
+  "published_utc": "2026-10-08T20:53:58Z",
+  "prerelease": true,
+  "tag": "v0.1.2",
+  "commit": "6da0bd2300295c12fcb25b725983bcaf9d2a52c8",
+  "source_tree": "ca1030d1958ead2f93752e37bc3daf3c57c5fc93",
+  "pages": [
+    {
+      "url": "https://github.com/not-dlyrr/mono-cut",
+      "http_status": 200,
+      "unauthenticated": true
+    },
+    {
+      "url": "https://github.com/not-dlyrr/mono-cut/releases/tag/v0.1.2",
+      "http_status": 200,
+      "unauthenticated": true
+    },
+    {
+      "url": "https://github.com/not-dlyrr/mono-cut/tree/v0.1.2",
+      "http_status": 200,
+      "unauthenticated": true
+    }
+  ],
+  "assets": [
+    {
+      "file": "BUILD-INFO.json",
+      "url": "https://github.com/not-dlyrr/mono-cut/releases/download/v0.1.2/BUILD-INFO.json",
+      "http_status": 200,
+      "bytes": 8841,
+      "sha256": "09abde1a3ca1d850594306256de42aaef7be30727ce65044f415d229f5d9d36f",
+      "github_digest": "sha256:09abde1a3ca1d850594306256de42aaef7be30727ce65044f415d229f5d9d36f",
+      "unauthenticated": true
+    },
+    {
+      "file": "mono-cut-0.1.2-windows-x64-setup.exe",
+      "url": "https://github.com/not-dlyrr/mono-cut/releases/download/v0.1.2/mono-cut-0.1.2-windows-x64-setup.exe",
+      "http_status": 200,
+      "bytes": 34691557,
+      "sha256": "0878859e0868429c6d2a9be0ee143b4162a8835a02f09e4598058999e911dd3c",
+      "github_digest": "sha256:0878859e0868429c6d2a9be0ee143b4162a8835a02f09e4598058999e911dd3c",
+      "unauthenticated": true
+    },
+    {
+      "file": "mono-cut-media-source-0.1.2.zip",
+      "url": "https://github.com/not-dlyrr/mono-cut/releases/download/v0.1.2/mono-cut-media-source-0.1.2.zip",
+      "http_status": 200,
+      "bytes": 79579716,
+      "sha256": "c3ca8309a686a92426c0449a06ab0adedd73776f2ad04b01d1e3e409aced502d",
+      "github_digest": "sha256:c3ca8309a686a92426c0449a06ab0adedd73776f2ad04b01d1e3e409aced502d",
+      "unauthenticated": true
+    },
+    {
+      "file": "mono-cut-source-0.1.2.zip",
+      "url": "https://github.com/not-dlyrr/mono-cut/releases/download/v0.1.2/mono-cut-source-0.1.2.zip",
+      "http_status": 200,
+      "bytes": 2526558,
+      "sha256": "eaeab907d18be9a37b2475611a82a51f357499f2c5a819df4ca7d00125090e2a",
+      "github_digest": "sha256:eaeab907d18be9a37b2475611a82a51f357499f2c5a819df4ca7d00125090e2a",
+      "unauthenticated": true
+    },
+    {
+      "file": "mono-cut-source-dependencies-0.1.2.zip",
+      "url": "https://github.com/not-dlyrr/mono-cut/releases/download/v0.1.2/mono-cut-source-dependencies-0.1.2.zip",
+      "http_status": 200,
+      "bytes": 131053057,
+      "sha256": "addcac78c5905ab0af7e076a70dff9cd796fbd4fe7478c929d6599d2f8adcf87",
+      "github_digest": "sha256:addcac78c5905ab0af7e076a70dff9cd796fbd4fe7478c929d6599d2f8adcf87",
+      "unauthenticated": true
+    },
+    {
+      "file": "SHA256SUMS.txt",
+      "url": "https://github.com/not-dlyrr/mono-cut/releases/download/v0.1.2/SHA256SUMS.txt",
+      "http_status": 200,
+      "bytes": 480,
+      "sha256": "c3a4e3081340089e11a2ed8bcaebd78ec5e0c493b3ea5032f8c8a5675950be1a",
+      "github_digest": "sha256:c3a4e3081340089e11a2ed8bcaebd78ec5e0c493b3ea5032f8c8a5675950be1a",
+      "unauthenticated": true
+    }
+  ],
+  "tagged_app_sha256": "b819500602bdda8e91c23e043c05704f897ac41d7dde9307b7228a1f2a9b309a",
+  "prior_releases": [
+    {
+      "version": "0.1.0",
+      "release_url": "https://github.com/not-dlyrr/mono-cut/releases/tag/v0.1.0",
+      "commit": "0af14da1dce29164aadb55d565b1e0e5d0252ad4",
+      "asset_count": 6,
+      "installer_sha256": "065fbc50f426bb8304e914345cd3e411da1132337bccbd592898c388c563c348",
+      "assets": [
+        {
+          "file": "BUILD-INFO.json",
+          "bytes": 6842,
+          "sha256": "c48a3429fc25b868549ec8afc4e03eab7d630b7533235e71aee38e777859006f"
+        },
+        {
+          "file": "mono-cut-0.1.0-windows-x64-setup.exe",
+          "bytes": 34558170,
+          "sha256": "065fbc50f426bb8304e914345cd3e411da1132337bccbd592898c388c563c348"
+        },
+        {
+          "file": "mono-cut-media-source-0.1.0.zip",
+          "bytes": 79579716,
+          "sha256": "f1c9870e2265194e03610d1fcf6cf8eccf3c31e8edbe67cf6772ea966f6bace8"
+        },
+        {
+          "file": "mono-cut-source-0.1.0.zip",
+          "bytes": 1558047,
+          "sha256": "9c0da15fa6c7b663a8b28d3f8f35a1e2cf7f3c69a2551dc2e874661857296a01"
+        },
+        {
+          "file": "mono-cut-source-dependencies-0.1.0.zip",
+          "bytes": 131089481,
+          "sha256": "3f09a885d1a1e666c0268200ba73f91dcd78e5c7b3b04ae5cfdab29fa8842b08"
+        },
+        {
+          "file": "SHA256SUMS.txt",
+          "bytes": 480,
+          "sha256": "adcc07c5769c61855698489a4d58a734870f6ea64efc9870faa7ef1db3397321"
+        }
+      ]
+    },
+    {
+      "version": "0.1.1",
+      "release_url": "https://github.com/not-dlyrr/mono-cut/releases/tag/v0.1.1",
+      "commit": "bd4047e2555c1be0afaaedafdbe5147ba47138a8",
+      "asset_count": 6,
+      "installer_sha256": "9b68ec666e650ce6861e60fa83a98a5995c3c78128cecf3cd612baf5094e89f7",
+      "assets": [
+        {
+          "file": "BUILD-INFO.json",
+          "bytes": 6842,
+          "sha256": "900ecdc668aa4358b53bee849cfe0dc4b548b393c407a1bc7baff67126979cae"
+        },
+        {
+          "file": "mono-cut-0.1.1-windows-x64-setup.exe",
+          "bytes": 34563781,
+          "sha256": "9b68ec666e650ce6861e60fa83a98a5995c3c78128cecf3cd612baf5094e89f7"
+        },
+        {
+          "file": "mono-cut-media-source-0.1.1.zip",
+          "bytes": 79579716,
+          "sha256": "f1c9870e2265194e03610d1fcf6cf8eccf3c31e8edbe67cf6772ea966f6bace8"
+        },
+        {
+          "file": "mono-cut-source-0.1.1.zip",
+          "bytes": 1570730,
+          "sha256": "a98d73cfc1b7abf168ade9056c6f39899bea168206de3374fbf1793ad8fd38db"
+        },
+        {
+          "file": "mono-cut-source-dependencies-0.1.1.zip",
+          "bytes": 131053057,
+          "sha256": "0393414f2c0d7cd1ef15f83eb61b613dfa27408cf86164ca4c3650536c6b58fd"
+        },
+        {
+          "file": "SHA256SUMS.txt",
+          "bytes": 480,
+          "sha256": "d75cb2c51ff2573a7d4fa01349b4d1cf07b9e8370cbdba4455bd6da454bb3170"
+        }
+      ]
+    }
+  ],
+  "installer_editor_browser_player_launched": false,
+  "exact_commit_ci": {
+    "commit": "6da0bd2300295c12fcb25b725983bcaf9d2a52c8",
+    "source_tree": "ca1030d1958ead2f93752e37bc3daf3c57c5fc93",
+    "main_url": "https://github.com/not-dlyrr/mono-cut/actions/runs/37840359908",
+    "release_url": "https://github.com/not-dlyrr/mono-cut/actions/runs/37840368151",
+    "counts": {
+      "verify (ubuntu-24.04)": {
+        "engine_passed": 89,
+        "engine_failed": 0,
+        "explicit_diagnostics_or_benchmarks_ignored": 8,
+        "interface_passed": 142,
+        "windows_loader_passed": null
+      },
+      "verify (macos-14)": {
+        "engine_passed": 89,
+        "engine_failed": 0,
+        "explicit_diagnostics_or_benchmarks_ignored": 8,
+        "interface_passed": 142,
+        "windows_loader_passed": null
+      },
+      "verify (windows-latest)": {
+        "engine_passed": 89,
+        "engine_failed": 0,
+        "explicit_diagnostics_or_benchmarks_ignored": 8,
+        "interface_passed": 142,
+        "windows_loader_passed": 7
+      }
+    },
+    "ci_installer_sha256": "a24052a141c1cbc8b1194cad1c958e061fc03db775d119729dd0e325d18bbf49",
+    "main_log_sha256": "ec12f26c4f8cbc532d7315d7c9a3978d8b3b5459e08385685d1d987926a423a9",
+    "release_log_sha256": "55e1d4302b323535d3b5ff85180bddf3e9d0bb86da983e2dae31978fcd2b14ea",
+    "ci_artifacts": {
+      "mono-cut-0.1.2-windows-x64-setup.exe": {
+        "bytes": 34639133,
+        "sha256": "a24052a141c1cbc8b1194cad1c958e061fc03db775d119729dd0e325d18bbf49"
+      },
+      "mono-cut-media-source-0.1.2.zip": {
+        "bytes": 79579713,
+        "sha256": "e442116bd2bd27cf57aca241364bf885f91a5277547a4ad984645660513e9120"
+      },
+      "mono-cut-source-0.1.2.zip": {
+        "bytes": 2526558,
+        "sha256": "c474c5f40712820e89181d9b898e86db2cef58b89cc857fdd64441166814676c"
+      },
+      "mono-cut-source-dependencies-0.1.2.zip": {
+        "bytes": 131098583,
+        "sha256": "28e28994157fe6b9f73c5909fc4bc81d356a8fb4f15edd275abcb6c044ed8b04"
+      }
+    }
+  },
+  "local_static_package": {
+    "version": "0.1.2",
+    "commit": "6da0bd2300295c12fcb25b725983bcaf9d2a52c8",
+    "source_tree": "ca1030d1958ead2f93752e37bc3daf3c57c5fc93",
+    "manifest_verified": true,
+    "source_files_compared_to_tagged_checkout": 202,
+    "dependency_files": 24026,
+    "native_and_playback_freeze_unchanged": true,
+    "resources_verified": 21,
+    "installer_signature_status": "NotSigned",
+    "built_file_version": "0.1.2",
+    "built_product_version": "0.1.2",
+    "installer_or_editor_launched": false
+  },
+  "installer_integrity": {
+    "installer": "Mono Cut_0.1.2_x64-setup.exe",
+    "installerSha256": "0878859e0868429c6d2a9be0ee143b4162a8835a02f09e4598058999e911dd3c",
+    "builtExecutableSha256": "5d80bbe4dbaa38196c346f8a9e59859e47bc00bc97b20e18ee2db56a68f90e99",
+    "packagedExecutableSha256": "30e72ef977222481ebe0af8f98e5972488dbcaadc256c0d8d30d0883a5165914",
+    "bundleMarkerMutation": true,
+    "resourceFilesValidated": 21,
+    "privatePathDetected": false,
+    "editorExecuted": false
+  },
+  "public_source_archive": {
+    "tagged_commit": "6da0bd2300295c12fcb25b725983bcaf9d2a52c8",
+    "public_source_entries_verified": 202,
+    "local_source_unchanged": true
+  },
+  "build": {
+    "exit_code": 0,
+    "seconds": 342.1387334,
+    "log_sha256": "66c76c43dcdfd5bb8236e8fc498de9c352546a421341662315c3385e2b744b9b"
+  },
+  "source_freeze": {
+    "file": "release-0.1.2-source-freeze.json",
+    "sha256": "3f7e80fe5f537ce5a02176babda3b16d3047927bae411595835720784c52046e",
+    "native_files": 32,
+    "owned_frontend_files": 21,
+    "resources": 21,
+    "metadata_only_changes": [
+      {
+        "path": "src-tauri/Cargo.lock",
+        "before": "df4621c974420f222a32c9454a13b72fc904922f0451a7d1865a4fdd3bc2f063",
+        "after": "0465a63dc48cd5a114a6e776202ee544dfbf6f80c8003610b33744bb163bd7d4",
+        "reason": "Application version 0.1.1 -> 0.1.2 only"
+      },
+      {
+        "path": "src-tauri/Cargo.toml",
+        "before": "1ff2bfd675f1dbb686a0835b17cb01386ffc75698815418f4e707d355fc74717",
+        "after": "39b1e7f1a1bc426e20a441d75efcdec707a805eef5252216434bf96bf18a47c1",
+        "reason": "Application version 0.1.1 -> 0.1.2 only"
+      }
+    ]
+  },
+  "preserved_historical_evidence": {
+    "docs/evidence/initial-video-timestamps.json": "96d825b774ef83a883b39c37d255e9c1af85b72e1d2a126f2aafb83d1383514e",
+    "docs/evidence/monitor-keyboard.json": "f4ea0122483161668ac2de72da92f746cd8fb9c1211bf1a43122c454b891a895",
+    "docs/evidence/preview-continuity.json": "da22e3ec817b051b100c201f309bef149b5110200cd524d58f303749c86dc8ec",
+    "docs/evidence/preview-regions.json": "99c5260972af0067b8edcf2b192506a210f8a7a470a4a2894fff9ac219880d68",
+    "docs/evidence/retiming.json": "664dc3921ef85d02b07fefbec9ebf63141e1486ce6a6589fb5e7dae6c0128ce4",
+    "docs/evidence/timeline-waveforms.json": "f2e7b6546b0be0f171d7db88a2f7ed7cac0b55bd277bcb580ef10351c03d1a15"
+  },
+  "privacy": {
+    "source_archive_contains_no_generated_media_or_private_workspace": true,
+    "static_installer_private_path_detected": false
+  },
+  "validation_scope": {
+    "silent": true,
+    "installer_executed": false,
+    "editor_executed": false,
+    "browser_or_player_launched": false,
+    "new_screenshots": false,
+    "native_focus_pointer_display_tested": false,
+    "audible_handoff_tested": false,
+    "fresh_installation_tested": false,
+    "linux_macos_gui_tested": false
+  },
+  "fixture_scope": {
+    "timed_continuity_has_inherited_split_envelopes": false,
+    "split_evidence": "Separate split_envelopes, retime and decoded actual-media regressions"
+  },
+  "retained_failures": [
+    "Strict sharp-pulse AAC-versus-FLAC RMS fidelity failure",
+    "Older fractional split tiny float difference diagnostic",
+    "Inherited-fade sample clock counterexample in v7; v8 correction has separate evidence",
+    "Stage 7 initial seven instrumentation failures; corrected actual-source tests retained",
+    "Initial source-preparation wrapper mistreated absent native exit status; successful media ZIP was tested and retained"
+  ],
+  "limits": [
+    "Prepared-file CPU playback; native boundary behavior unverified",
+    "256-packet initial-PTS policy does not certify later timestamps; origin-prefix decoding costs grow",
+    "Active asset pins can exceed 32-record/512 MiB retention targets",
+    "Whole-Hz varispeed resampling changes pitch",
+    "Coarse pre-effects mono waveform bins; no sample-accurate peak/loudness guarantee",
+    "Stereo, 8-bit YUV 4:2:0; no HDR/wide-gamut color management",
+    "Unsigned Windows x64; existing WebView2 required",
+    "Advanced professional capabilities remain roadmap work"
+  ],
+  "prior_assets_compared_to_original_publication_records": true
+}

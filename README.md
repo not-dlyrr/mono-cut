@@ -5,7 +5,7 @@ React and TypeScript. It imports local media, edits a multitrack sequence, saves
 and reopens projects, and exports through a locally bundled software FFmpeg
 engine. No accounts, subscriptions or rendering services are required.
 
-Version 0.1 is a working foundation. The program monitor currently plays a
+Version 0.1.2 is a working foundation. The program monitor currently plays a
 background-rendered preview file; direct low-latency native playback and advanced
 professional tools remain development work. See the
 [feature matrix](docs/features.md) and [validation record](docs/validation.md)
@@ -15,34 +15,30 @@ for exact capabilities and verified limits.
 [Versioned releases](https://github.com/not-dlyrr/mono-cut/releases) ·
 [Native screenshots](docs/screenshots.md)
 
-The [publication record](docs/publication-validation.md) records verified public
-links, checksums and CI results. The [0.1.1 release record](docs/release-0.1.1.md)
-describes the portable display-fit correction and its package validation.
+The [0.1.2 prerelease](https://github.com/not-dlyrr/mono-cut/releases/tag/v0.1.2)
+includes the Windows installer, three matching source archives, build information
+and checksums. All six files were downloaded without authentication and verified
+on 2026-10-08. The [release report](docs/release-0.1.2.md) records exact source,
+package checks and successful Windows/Linux/macOS CI. Installation and native
+UI/audio handoff were not retested for this package; testing stayed silent.
+The [publication history](docs/publication-validation.md) retains earlier releases.
 
-Unreleased source adds bounded program-preview regions: a requested frame first,
-then five seconds of prepared playback. It now prepares one adjoining successor
-during forward playback and reuses its loaded monitor node at the boundary.
-See the [continuity record](docs/preview-continuity.md) for the implemented
-ownership rules, silent measurements and unverified native handoff limits.
-These changes are not included in the published 0.1.1 installer. Independent
-review accepted the tested Stage 4B clock/readiness correction; the
-[focused correction record](docs/initial-video-timestamps.md) retains explicit
-prefix-decoding costs and strict sharp-pulse codec-quality failures.
+Program previews now prepare a requested frame, five-second regions and one
+adjoining successor during forward playback. See [continuity](docs/preview-continuity.md)
+and [initial timestamp correction](docs/initial-video-timestamps.md) for measured
+file/source behavior, prefix-decoding costs, codec failures and native limits.
 
-Unreleased source also repairs **Speed** in both workspaces: a committed retime
-preserves the selected source interval, resizes linked picture/audio together,
-and rejects new overlaps. See [retiming](docs/retiming.md) for exact rounding,
-automation, project compatibility and silent verification scope.
+**Speed** preserves the selected source interval, resizes linked picture/audio
+together and rejects new overlaps. [Retiming](docs/retiming.md) documents rounding,
+source-relative automation, project compatibility and varispeed pitch changes.
 
-Unreleased source also corrects timeline waveforms to follow source-in, trims,
-slips and speed in both workspaces. Brief peaks survive bounded max aggregation.
-See [waveform timing and silent checks](docs/timeline-waveforms.md) for source-bin
-resolution, live gesture checks, actual media validation and remaining limits.
+Timeline waveforms follow source-in, trims, slips and speed in both workspaces.
+[Waveform timing](docs/timeline-waveforms.md) documents bounded visible rendering,
+actual-media checks and coarse pre-effect source-bin limits.
 
-Unreleased source also routes monitor shortcuts to the last activated Source or
-Program monitor in either workspace, with keyboard focus and an active header cue.
-See [monitor keyboard ownership](docs/monitor-keyboard.md) for target rules,
-remapping, controlled tests and native verification limits.
+Monitor shortcuts follow the activated Source or Program monitor in either mode,
+with keyboard focus and an active header cue. [Keyboard ownership](docs/monitor-keyboard.md)
+records target rules, remapping, controlled tests and native verification limits.
 
 ## Windows installation
 

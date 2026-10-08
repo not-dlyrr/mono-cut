@@ -1,10 +1,11 @@
 # Initial video timestamps: focused Stage 4B correction
 
-This local, unreleased source correction and the tested Stage 4B prepared-region
-clock/readiness scope have been independently accepted. Acceptance covers the
+This correction ships in [0.1.2](release-0.1.2.md). Independent review accepted
+the tested Stage 4B prepared-region clock/readiness scope. Acceptance covers the
 recorded source timing, exact picture/PCM coverage and validated file readiness;
-the retained strict lossy-audio fidelity diagnostic still fails. The published
-0.1.1 installer and release assets have not been rebuilt or replaced. All
+the retained strict lossy-audio fidelity diagnostic still fails. The older
+0.1.1 installer and assets remain intact. Evidence below retains its recorded
+stage snapshot rather than a freshly installed 0.1.2 session. All
 executed validation below used silent file decoding and headless engine helpers;
 no editor, browser, player, installer or audio output was launched.
 

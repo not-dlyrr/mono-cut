@@ -1,5 +1,19 @@
 # Public release verification
 
+## Windows 0.1.2
+
+The [public 0.1.2 prerelease](https://github.com/not-dlyrr/mono-cut/releases/tag/v0.1.2)
+and all six assets were independently downloaded without authentication on
+2026-10-08. Repository, tagged source, release and download URLs returned HTTP 200.
+Every full download matches its local package and GitHub SHA-256 digest and size.
+All 202 application source files match the exact tagged commit
+`6da0bd2300295c12fcb25b725983bcaf9d2a52c8`. Older 0.1.0/0.1.1 tags and assets
+remain intact. The [release report](release-0.1.2.md) lists every checksum,
+source/build information, static executable/resource checks and two successful
+CI runs. [Machine-readable evidence](evidence/release-0.1.2.json) retains the
+public verification records and original stage hashes. Testing stayed silent;
+installation, native UI/focus/pointer/display and audible handoff remain unverified.
+
 ## Windows 0.1.1
 
 The public 0.1.1 prerelease and all six asset URLs were verified on 2026-10-08

@@ -1,4 +1,4 @@
-# Timeline waveforms (unreleased source)
+# Timeline waveforms
 
 Easy and Advanced now draw the audio contained in the edited clip, including its
 source-in and speed. Moving a clip preserves that source interval. Trimming or
@@ -8,7 +8,9 @@ source change as the native editing command. Unrelated selected clips do not
 follow a trim or slip. The Slip tool is available in Advanced; Easy's inspector
 slip controls update the same project model.
 
-This change is in source only. The published 0.1.1 installer is unchanged.
+This implementation ships in [0.1.2](release-0.1.2.md). The stage measurements
+below retain their original source snapshots; native gestures were not observed
+for this package. The older 0.1.1 release remains intact.
 
 ## Source clock and resolution
 

@@ -1,7 +1,8 @@
 # Program preview scheduling and reuse
 
-This document describes the published 0.1.1 complete-sequence preview. Unreleased
-source uses the same identity, cancellation and asset-protection foundation for
+This historical document describes the preserved 0.1.1 complete-sequence preview.
+Published [0.1.2](release-0.1.2.md) uses the same identity, cancellation and
+asset-protection foundation for
 [bounded region previews](preview-regions.md) and
 [prepared-region continuity](preview-continuity.md), with a different cache recipe.
 
@@ -32,7 +33,7 @@ fit correction. Its keys differ from v1, so previously rendered v1 previews
 cannot be reused with the corrected renderer. The published Windows 0.1.0
 installer retains the original v1 recipe.
 
-Unreleased source uses `program-preview-v8-regions-integer-sample-clock`. It
+Version 0.1.2 uses `program-preview-v8-regions-integer-sample-clock`. It
 retains v7's common post-gain mixing precision and fixes the sample timestamp
 reset after clip trimming. Under an explicit `1/sample_rate` timebase, `asetpts=N`
 avoids the one-sample truncation possible with divided-double `N/SR/TB`, which

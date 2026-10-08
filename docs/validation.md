@@ -1,5 +1,12 @@
 # Validation record — 0.1.0
 
+This page retains the earlier 0.1.0 native workflow and source follow-ups. Current
+[0.1.2 package/publication validation](release-0.1.2.md) records exact-commit
+Windows/Linux/macOS CI, static installer checks and all six rehashed public
+downloads. It does not repeat native UI or fresh-install validation. Later
+corrections described below now ship in 0.1.2; their earlier stage measurements
+and failures remain historical evidence.
+
 The editor was exercised inside its actual Windows Tauri/WebView2 application,
 with real, generated video, audio and image files. Test playback was muted;
 audio timing was checked by decoding exported audio samples. Test fixtures and

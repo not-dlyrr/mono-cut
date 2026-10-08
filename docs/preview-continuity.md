@@ -5,10 +5,10 @@ adds v8's integer post-trim audio sample clock after a separate inherited-fade
 counterexample; it preserves the prepared-region ownership model described here.
 The original Stage 4C JSON, binaries and failed/accepted captures remain unchanged.
 
-This is an unreleased source change. The published 0.1.1 installer and release
-assets are unchanged. It implements look-ahead for ordinary forward playback;
-native monitor display, media-element boundary latency and audible handoff have
-not been observed in this stage. Validation stays silent and launches no editor,
+This ownership model and the later v8 clock correction ship in [0.1.2](release-0.1.2.md).
+The older 0.1.1 assets remain intact. It implements look-ahead for ordinary forward
+playback; native monitor display, media-element boundary latency and audible
+handoff have not been observed for these stages or the new package. Validation stays silent and launches no editor,
 browser, player or installer.
 
 ## Implemented flow

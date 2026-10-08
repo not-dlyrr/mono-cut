@@ -1,6 +1,6 @@
 # Architecture
 
-Mono Cut 0.1 uses a Rust engine in a Tauri 2 desktop process and a React/TypeScript
+Mono Cut 0.1.2 uses a Rust engine in a Tauri 2 desktop process and a React/TypeScript
 interface in the system webview. The development Vite URL serves that interface;
 media commands still require the native desktop process. There is no browser
 fallback that simulates editing or exports.
@@ -14,10 +14,10 @@ fallback that simulates editing or exports.
 | `render.rs` | Shared filter-graph compiler for preview and final export |
 | `jobs.rs` | Bounded background FFmpeg jobs, progress and cancellation |
 | `preview.rs` | Render identities, completed-preview records and retention |
-| `audio_clock.rs` | Unreleased sample-clock caches and bounded audio preparation |
-| `video_seek.rs` | Unreleased initial packet-PTS assessment, bounded classification cache and source-specific seek fallback |
+| `audio_clock.rs` | Sample-clock caches and bounded audio preparation |
+| `video_seek.rs` | Initial packet-PTS assessment, bounded classification cache and source-specific seek fallback |
 | `lib.rs` | Tauri command boundary, managed state, events and resource paths |
-| `programPreview.ts` | Unreleased two-stage region requests, stale-result rejection and coverage |
+| `programPreview.ts` | Two-stage region requests, stale-result rejection and coverage |
 | `programTransport.ts` | Signed transport intent and guarded resume across prepared regions |
 | `monitorLifecycle.ts` | Current-media event, play-promise and playback-clock guards |
 | `src/` | Native command-driven interface, monitor playback and timeline input |
@@ -31,7 +31,7 @@ then enters history; errors leave the live project unchanged. Undo history keeps
 100 states. Mixed input frame rates are converted explicitly to sequence fps in
 the renderer and then to the requested export fps.
 
-Unreleased `retime_clip` plans linked changes on a copy and preserves an exact
+`retime_clip` plans linked changes on a copy and preserves an exact
 source span. The integer duration is its floor projection at the requested
 speed; canonical source-relative envelopes and the source conversion origin
 survive repeated requests, cuts and trims. Ordering anchors stay on the original
@@ -61,7 +61,7 @@ Audio gain evaluates per sample on the shared ceil placement/range grid. See
 Preview may choose proxies and a smaller output resolution; final export uses
 original media.
 
-Unreleased source requests exact global regions through the same compiler. A
+Published 0.1.2 requests exact global regions through the same compiler. A
 production controller prepares one frame, then five seconds of playback;
 ordinary contributing video uses optimized seeks and filter EOF. Missing initial
 packet PTS instead requires explicit origin-prefix decoding, whose cost grows
@@ -78,7 +78,7 @@ AAC-versus-FLAC RMS 0.003 diagnostic still fails; native playback, every source
 clock and universal codec fidelity are outside that acceptance. See
 [initial video timestamp correction](initial-video-timestamps.md) for the
 evidence and limits. The following complete-sequence behavior describes the
-published 0.1.1 installer.
+preserved historical 0.1.1 installer; 0.1.2 uses the regions described above.
 
 The 0.1 playback implementation renders a timeline preview MP4 on background
 workers and plays/seeks that cached file through the native webview media element.
@@ -118,7 +118,7 @@ targets. Preview requests coalesce by render identity and reject stale interface
 keys. See [preview scheduling and reuse](preview-cache.md) for fingerprint,
 manifest validation, cancellation and adoption semantics.
 
-Unreleased forward preview maintains two persistent media nodes: the current
+Forward preview maintains two persistent media nodes: the current
 region and one adjoining successor. A completed file is a candidate; actual
 media readiness requires the matching loaded source, generation, duration and
 `canplay` state. Current and successor consuming pins survive until their nodes

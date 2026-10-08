@@ -1,6 +1,7 @@
-# Monitor keyboard ownership (unreleased source)
+# Monitor keyboard ownership
 
-Source and Program now share an explicit keyboard target in Easy and Advanced.
+Source and Program share an explicit keyboard target in Easy and Advanced,
+shipped in [0.1.2](release-0.1.2.md). The stage evidence below remains historical.
 The active monitor has a small **Keyboard** label and a line below its header,
 using the existing focus token. Its region is reachable with Tab, has a visible
 focus outline and identifies itself as the keyboard target to assistive tools.
@@ -89,8 +90,8 @@ are linked in the evidence; no media gate or tolerance was relaxed.
 
 Testing stayed silent. No native app, browser, player, installer or audio device
 was opened. Native focus transfer, pointer behavior, displayed styling and
-audible transport behavior remain unverified. This is source only; the published
-installer and release are unchanged.
+audible transport behavior remain unverified for this stage and the new package.
+The implementation now ships in 0.1.2; the older releases remain intact.
 
 Reproduce with `npm ci`, `npm run test:preview` and `npm run build`. No fixture
 footage, media decoder or audio output is needed for this stage's tests.

@@ -10,9 +10,10 @@ sharp-pulse AAC comparison remains outside its strict quality limit.
 This document preserves Stage 4B measurements and its boundary-pause behavior;
 [Stage 4C continuity](preview-continuity.md) describes the subsequent successor queue.
 
-This source-only stage replaces complete-sequence preparation in the editing
-workspace with requested regions. The published 0.1.1 installer and its release
-assets remain unchanged. Validation uses generated media, silent file decoding
+This historical stage replaced complete-sequence preparation with requested
+regions. Its implementation and subsequent corrections ship in [0.1.2](release-0.1.2.md);
+the older 0.1.1 release remains intact. The measurements below belong to their
+recorded stage snapshots. Validation uses generated media, silent file decoding
 and production scheduling code. Native display/resume latency and audible output
 remain unverified for this stage and are outside the timing endpoints below.
 

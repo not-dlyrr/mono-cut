@@ -1,6 +1,6 @@
 # Speed and retained source intervals
 
-The source-stage Speed control uses one `retime_clip` transaction in both Easy
+The Speed control shipped in [0.1.2](release-0.1.2.md) uses one `retime_clip` transaction in both Easy
 and Advanced workspaces. A request supplies a clip ID and a positive rational
 speed. Titles and still images have no changing source clock; their Speed
 control is unavailable. Trim their duration instead. Audio uses varispeed,
@@ -90,8 +90,9 @@ AAC fidelity failure; those historical captures remain unchanged.
 
 Validation is silent: media is encoded and decoded to files, with no player,
 native app, speaker output or installer launch. The preceding Speed defect was
-reproduced through the actual `ProjectStore` before the replacement. This source stage has not updated the published
-0.1.1 installer or established native audiovisual continuity.
+reproduced through the actual `ProjectStore` before the replacement. The historical
+stage measurements below retain their original source snapshots. This correction
+now ships in 0.1.2; native audiovisual continuity remains unverified.
 
 The final media matrix passes all 18 cases: each scenario below runs with
 originals and with actual generated proxies, using the same frozen renderer.
