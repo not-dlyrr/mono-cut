@@ -14,7 +14,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-pub const RECIPE: &str = "program-preview-v1";
+pub const RECIPE: &str = "program-preview-v2";
 pub const MAX_ENTRIES: usize = 32;
 pub const MAX_BYTES: u64 = 512 * 1024 * 1024;
 

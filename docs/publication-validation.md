@@ -43,9 +43,15 @@ media assertions. Both native Unix media builds then passed. In
 [run 37755934520](https://github.com/not-dlyrr/mono-cut/actions/runs/37755934520),
 Linux passed the full engine/media suite; macOS passed eight workflow checks but
 the portrait-fit check measured a 99-pixel bright footprint where 100 was
-expected. Exact geometry assertions remain in place while decoded-edge
-diagnostics distinguish rendering from pixel conversion. The Windows release
-already bundles the audited media baseline.
+expected. Diagnostics proved a rendered edge loss and reproduced it through
+scalar rendering on Windows. The post-release source correction normalizes the
+initial fitted canvas to even pixels before RGBA conversion and updates the
+preview recipe. Exact geometry assertions remain in place and cover both
+optimized and scalar rendering, including a fractional aspect ratio.
+[Display fit validation](display-fit-validation.md) records the evidence and
+silent local results. The corrected source awaits its full cross-platform CI
+results. The published Windows package and its audited media baseline remain
+unchanged.
 
 CI is distinct from a verified native Linux/macOS installer release. The old
 0.1.0 tag/downloads remain intact while the CI preparation follow-up advances

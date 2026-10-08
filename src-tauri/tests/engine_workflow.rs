@@ -620,6 +620,7 @@ fn rotated_and_anamorphic_sources_preserve_display_fit_with_proxies() {
         ("portrait", "1", true, (90, 160), (100, 180)),
         ("anamorphic", "2", false, (320, 90), (320, 90)),
         ("rotated-anamorphic", "2", true, (90, 320), (50, 180)),
+        ("rotated-fractional", "83/80", true, (90, 166), (98, 180)),
     ] {
         let encoded = dir.path().join(format!("{name}-encoded.mp4"));
         media::run_ffmpeg(
@@ -733,40 +734,39 @@ fn rotated_and_anamorphic_sources_preserve_display_fit_with_proxies() {
                     }
                 }
             }
-            // Keep the geometry expectation unchanged while distinguishing
-            // compositor pixels from architecture-specific RGB conversion.
-            let scalar = media::command(&ctx.ffmpeg)
-                .args(["-v", "error", "-cpuflags", "0", "-i"])
-                .arg(&output)
-                .args(["-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"])
-                .output()
-                .unwrap();
-            assert!(scalar.status.success());
-            assert_eq!(scalar.stdout.len(), pixels.len());
-            let luma = decoded(
+            // Render the identical graph through scalar FFmpeg paths as well.
+            let scalar_output = dir.path().join(format!("{name}-{use_proxy}-scalar.mkv"));
+            let mut scalar_args = vec!["-cpuflags".into(), "0".into()];
+            scalar_args.extend(plan.args.clone());
+            *scalar_args.last_mut().unwrap() = scalar_output.to_string_lossy().into_owned();
+            media::run_ffmpeg(&ctx, &scalar_args).unwrap();
+            let scalar_pixels = decoded(
                 &ctx,
-                &output,
-                &[
-                    "-frames:v",
-                    "1",
-                    "-vf",
-                    "extractplanes=y",
-                    "-f",
-                    "rawvideo",
-                    "-pix_fmt",
-                    "gray",
-                ],
+                &scalar_output,
+                &["-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24"],
             );
-            assert_eq!(luma.len(), 320 * 180);
-            let bounds = |data: &[u8], channels: usize, cutoff: u8| {
-                let mut bx0 = 320usize;
+            let y_args = [
+                "-frames:v",
+                "1",
+                "-vf",
+                "extractplanes=y",
+                "-f",
+                "rawvideo",
+                "-pix_fmt",
+                "gray",
+            ];
+            let scalar_y = decoded(&ctx, &scalar_output, &y_args);
+            assert_eq!(scalar_pixels.len(), pixels.len());
+            assert_eq!(scalar_y.len(), 320 * 180);
+            let bounds = |data: &[u8], channels: usize, width: usize, height: usize| {
+                let mut bx0 = width;
                 let mut bx1 = 0usize;
-                let mut by0 = 180usize;
+                let mut by0 = height;
                 let mut by1 = 0usize;
-                for y in 0..180 {
-                    for x in 0..320 {
-                        let offset = (y * 320 + x) * channels;
-                        if data[offset..offset + channels].iter().all(|v| *v > cutoff) {
+                for y in 0..height {
+                    for x in 0..width {
+                        let offset = (y * width + x) * channels;
+                        if data[offset..offset + channels].iter().all(|v| *v > 180) {
                             bx0 = bx0.min(x);
                             bx1 = bx1.max(x);
                             by0 = by0.min(y);
@@ -774,35 +774,51 @@ fn rotated_and_anamorphic_sources_preserve_display_fit_with_proxies() {
                         }
                     }
                 }
-                (bx0 <= bx1 && by0 <= by1)
-                    .then(|| (bx0, bx1, by0, by1, bx1 - bx0 + 1, by1 - by0 + 1))
+                (bx0 <= bx1 && by0 <= by1).then(|| (bx0, bx1, by0, by1))
             };
-            let cutoffs: Vec<_> = [32u8, 64, 96, 127, 160, 180, 200, 220]
-                .into_iter()
-                .map(|cutoff| {
-                    (
-                        cutoff,
-                        bounds(&pixels, 3, cutoff),
-                        bounds(&scalar.stdout, 3, cutoff),
-                        bounds(&luma, 1, cutoff),
+            let left = (320 - expected_picture.0) / 2;
+            let top = (180 - expected_picture.1) / 2;
+            let expected_bounds = Some((
+                left,
+                left + expected_picture.0 - 1,
+                top,
+                top + expected_picture.1 - 1,
+            ));
+            let default_bounds = bounds(&pixels, 3, 320, 180);
+            let scalar_bounds = bounds(&scalar_pixels, 3, 320, 180);
+            let scalar_y_bounds = bounds(&scalar_y, 1, 320, 180);
+            if default_bounds != expected_bounds
+                || scalar_bounds != expected_bounds
+                || scalar_y_bounds != expected_bounds
+            {
+                let source_y = decoded(&ctx, &source, &y_args);
+                let (source_width, source_height) = if rotation { (90, 160) } else { (160, 90) };
+                assert_eq!(source_y.len(), source_width * source_height);
+                let edges: Vec<_> = (left.saturating_sub(2)..=(left + 2).min(319))
+                    .chain(
+                        (left + expected_picture.0).saturating_sub(3)
+                            ..=(left + expected_picture.0 + 1).min(319),
                     )
-                })
-                .collect();
-            let left: usize = (320 - expected_picture.0) / 2;
-            let right = left + expected_picture.0 - 1;
-            let edges: Vec<_> = (left.saturating_sub(3)..=left + 3)
-                .chain(right.saturating_sub(3)..=(right + 3).min(319))
-                .map(|x| {
-                    let offset = (90 * 320 + x) * 3;
-                    (
-                        x,
-                        &pixels[offset..offset + 3],
-                        &scalar.stdout[offset..offset + 3],
-                        luma[90 * 320 + x],
-                    )
-                })
-                .collect();
-            eprintln!("FIT_DIAGNOSTIC {name} proxy={use_proxy}: thresholds=(cutoff, defaultRGB, scalarRGB, rawY) {cutoffs:?}; midpoint edges=(x, defaultRGB, scalarRGB, rawY) {edges:?}; graph={}", plan.filter_graph);
+                    .map(|x| {
+                        (
+                            x,
+                            &pixels[(90 * 320 + x) * 3..(90 * 320 + x) * 3 + 3],
+                            &scalar_pixels[(90 * 320 + x) * 3..(90 * 320 + x) * 3 + 3],
+                            scalar_y[90 * 320 + x],
+                        )
+                    })
+                    .collect();
+                eprintln!("FIT_DIAGNOSTIC {name} proxy={use_proxy}: defaultRGB={default_bounds:?}, scalarRGB={scalar_bounds:?}, scalarY={scalar_y_bounds:?}; midpoint edges=(x, defaultRGB, scalarRGB, scalarY) {edges:?}; autorotated source rawY={:?}; graph={}", bounds(&source_y, 1, source_width, source_height), plan.filter_graph);
+            }
+            assert_eq!(
+                default_bounds, expected_bounds,
+                "{name} proxy={use_proxy}: default picture must be centered"
+            );
+            assert_eq!(
+                scalar_bounds, expected_bounds,
+                "{name} proxy={use_proxy}: scalar RGB fit must preserve every picture column"
+            );
+            assert_eq!(scalar_y_bounds, expected_bounds, "{name} proxy={use_proxy}: scalar rendered Y plane must preserve every picture column");
             assert_eq!(
                 (max_x - min_x + 1, max_y - min_y + 1),
                 expected_picture,

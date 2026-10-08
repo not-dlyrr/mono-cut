@@ -399,11 +399,13 @@ fn compile_with_purpose(
                 number(t.crop_left),
                 number(t.crop_top)
             ));
-            // Normalize dimensions first so original and proxy inputs use the identical transform model.
+            // Normalize originals and proxies to the same even fit before RGBA conversion.
+            // Odd-width YUV-to-RGBA conversion can leave a transparent final column in scalar swscale.
+            let even_fit = |value: f64| ((value.round().max(2.) as u32) / 2) * 2;
             filters.push(format!(
                 "scale=w={}:h={}:flags=bicubic,setsar=1",
-                (cropw * fit).round().max(2.) as u32,
-                (croph * fit).round().max(2.) as u32
+                even_fit(cropw * fit),
+                even_fit(croph * fit)
             ));
             filters.push(format!(
                 "eq=brightness={}:contrast={}:saturation={}",

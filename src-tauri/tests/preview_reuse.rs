@@ -606,7 +606,7 @@ fn completed_cache_survives_manager_restart_but_missing_tampered_or_evicted_entr
                 let mut changed: Value =
                     serde_json::from_slice(&fs::read(&manifest).unwrap()).unwrap();
                 if case == "manifest-version" {
-                    changed["recipe"] = json!("incompatible-preview-version");
+                    changed["recipe"] = json!("program-preview-v1");
                 } else {
                     changed["width"] = json!(2);
                     changed["sample_rate"] = json!(8000);
