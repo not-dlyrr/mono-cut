@@ -39,12 +39,16 @@ release preparation handles tags without duplicate push builds.
 Eight actual-media source/proxy geometry cases passed optimized and scalar
 rendering, including exact fractional fit. Related Windows renderer/cache suites
 passed 43 tests, followed by a focused final rounding regression and four library
-lifecycle/time tests. The corrected engine passed all 54 active Rust tests on
-Linux and macOS ARM64. TypeScript checking and the production Windows desktop
-build passed after version metadata was updated. The earlier tagged Windows CI
-passed its full 54 engine tests, seven open-loader tests, interface checks,
-installer build and static integrity check. These are distinct results and
-snapshots; see [publication validation](publication-validation.md).
+lifecycle/time tests. The exact release commit
+`bd4047e2555c1be0afaaedafdbe5147ba47138a8` subsequently passed all 54 active Rust
+tests on Windows, Linux and macOS ARM64 in
+[run 37763138571](https://github.com/not-dlyrr/mono-cut/actions/runs/37763138571).
+The Windows job also passed 28 interface tests, seven open-loader tests,
+TypeScript checking, production interface and installer builds, all 21 packaged
+resource checks and artifact upload. One explicit performance benchmark remains
+ignored in normal CI. Local production Windows packaging passed separately.
+The CI installer is a separate build artifact; the public release checksum above
+is unchanged. See [publication validation](publication-validation.md).
 
 Native UI screenshots and workflow checks are from the earlier 0.1.0 validation.
 The 0.1.1 installer was not freshly installed or launched, and speaker playback

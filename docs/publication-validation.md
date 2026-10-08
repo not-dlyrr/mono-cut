@@ -24,11 +24,21 @@ Public tagged App source byte-matches the committed source.
 | Media source | 79,579,716 | `f1c9870e2265194e03610d1fcf6cf8eccf3c31e8edbe67cf6772ea966f6bace8` |
 | Dependency source | 131,053,057 | `0393414f2c0d7cd1ef15f83eb61b613dfa27408cf86164ca4c3650536c6b58fd` |
 
-The exact release metadata's [main CI run](https://github.com/not-dlyrr/mono-cut/actions/runs/37763138571)
-was still running at publication. The corrected renderer already passed the
-full Linux/macOS engine suites at the earlier c641352 snapshot, as recorded
-below, and the rebuilt Windows 0.1.1 package passed local static integrity.
-These results do not claim renewed native UI or speaker playback verification.
+The exact release commit's [CI run](https://github.com/not-dlyrr/mono-cut/actions/runs/37763138571)
+subsequently completed successfully on
+[Windows](https://github.com/not-dlyrr/mono-cut/actions/runs/37763138571/job/113264204500),
+[Linux](https://github.com/not-dlyrr/mono-cut/actions/runs/37763138571/job/113264204785)
+and [macOS ARM64](https://github.com/not-dlyrr/mono-cut/actions/runs/37763138571/job/113264204932).
+All three passed the interface checks and full engine/media suites. The Windows
+job passed 28 interface tests, 54 active engine tests and seven open-loader tests,
+then built the installer, verified all 21 packaged resources and uploaded its
+artifact. One explicit engine performance benchmark remains ignored in normal CI.
+Static integrity found no private home path and confirmed only the allowed Tauri
+bundle-marker change between built and packaged executables. The editor was not
+executed. The CI installer is a separate build artifact; its SHA-256
+`a84415a6de972018bbaf6ea2924e9ecbf5d7c9b9e423b299db09bcf5a3c728fe`
+does not replace the public release checksum above. These results do not claim
+renewed native UI or speaker playback verification.
 
 ## Preserved Windows 0.1.0
 
