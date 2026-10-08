@@ -1,5 +1,5 @@
 {
-  "name": "mono-cut", "version": "0.1.0", "private": true,
+  "name": "mono-cut", "version": "0.1.1", "private": true,
   "description": "Open-source desktop video editor", "license": "GPL-3.0-or-later",
   "scripts": {
     "dev": "vite --host 127.0.0.1", "build": "tsc && vite build",

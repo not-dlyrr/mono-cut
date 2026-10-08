@@ -8,7 +8,9 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const installer = resolve(process.argv[2] || join(root, 'src-tauri/target/release/bundle/nsis/Mono Cut_0.1.0_x64-setup.exe'));
+const version = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version;
+if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Invalid application version for installer verification.');
+const installer = resolve(process.argv[2] || join(root, `src-tauri/target/release/bundle/nsis/Mono Cut_${version}_x64-setup.exe`));
 const work = join(root, 'work'); mkdirSync(work, { recursive: true });
 const extracted = mkdtempSync(join(work, 'installer-verify-'));
 execFileSync('7z', ['x', installer, `-o${extracted}`, '-y'], { windowsHide: true, stdio: 'pipe' });

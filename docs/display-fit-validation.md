@@ -1,7 +1,7 @@
 # Post-release display fit correction
 
-This correction is in application source after the immutable Windows 0.1.0
-release. It is not included in that installer or its tagged source archive.
+This correction is included in Windows 0.1.1. The immutable Windows 0.1.0
+installer and its tagged source archive retain the earlier rendering behavior.
 
 Native ARM64 macOS tests found a missing last column in portrait footage.
 Default RGB decoding, scalar RGB decoding and the rendered Y plane all measured
@@ -41,6 +41,10 @@ native UI was started.
 
 Preview recipe `program-preview-v2` invalidates old v1 render records. The cache
 regression injects a stale v1 recipe and checks that a real replacement render
-occurs. The project format is unchanged. Cross-platform CI results for the
-corrected source are recorded in [publication validation](publication-validation.md)
-when available; native Linux/macOS installer playback remains separate work.
+occurs. The project format is unchanged. The corrected engine at commit
+`c641352d5bc22f55a0a19d721d3cb9a207ebf851` passed all 54 active Rust tests on
+[Linux](https://github.com/not-dlyrr/mono-cut/actions/runs/37760482289/job/113255410405)
+and [macOS ARM64](https://github.com/not-dlyrr/mono-cut/actions/runs/37760482289/job/113255410075).
+One explicit performance benchmark remains ignored in ordinary CI. The subsequent
+release version metadata does not change this rendering code. Native
+Linux/macOS installer playback remains separate work.

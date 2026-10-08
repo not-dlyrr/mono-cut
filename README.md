@@ -15,9 +15,9 @@ for exact capabilities and verified limits.
 [Versioned releases](https://github.com/not-dlyrr/mono-cut/releases) ·
 [Native screenshots](docs/screenshots.md)
 
-The [publication record](docs/publication-validation.md) verifies the public
-0.1.0 links and checksums, and distinguishes subsequent CI work from the tagged
-Windows release.
+The [publication record](docs/publication-validation.md) records verified public
+links, checksums and CI results. The [0.1.1 release record](docs/release-0.1.1.md)
+describes the portable display-fit correction and its package validation.
 
 ## Windows installation
 

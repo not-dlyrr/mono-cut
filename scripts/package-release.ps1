@@ -3,7 +3,7 @@
 # Run with PowerShell 7; expected hashes come from the reviewed build/source inputs.
 [CmdletBinding()]
 param(
-    [ValidateSet('0.1.0')][string]$Version = '0.1.0',
+    [ValidateSet('0.1.0', '0.1.1')][string]$Version = '0.1.0',
     [string]$Tag = 'v0.1.0',
     [Parameter(Mandatory)][string]$InstallerPath,
     [Parameter(Mandatory)][ValidatePattern('^[a-fA-F0-9]{64}$')][string]$InstallerSha256,
@@ -85,7 +85,9 @@ try {
     $package = Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json
     $tauri = Get-Content -LiteralPath 'src-tauri/tauri.conf.json' -Raw | ConvertFrom-Json
     $cargo = Get-Content -LiteralPath 'src-tauri/Cargo.toml' -Raw
-    if ($package.version -cne $Version -or $tauri.version -cne $Version -or $cargo -notmatch "(?m)^version\s*=\s*`"$([regex]::Escape($Version))`"\s*$") {
+    $cargoPackage = [regex]::Match($cargo, '(?ms)^\[package\]\s*(.*?)(?=^\[|\z)')
+    $cargoVersions = [regex]::Matches($cargoPackage.Groups[1].Value, '(?m)^version\s*=\s*"([^"]+)"\s*$')
+    if ($package.version -cne $Version -or $tauri.version -cne $Version -or -not $cargoPackage.Success -or $cargoVersions.Count -ne 1 -or $cargoVersions[0].Groups[1].Value -cne $Version) {
         throw 'Application, desktop shell and native engine versions must match the release.'
     }
     $installer = Require-Input $InstallerPath $InstallerSha256 'Windows installer'

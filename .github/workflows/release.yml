@@ -3,10 +3,13 @@ on:
   workflow_dispatch:
     inputs:
       version_tag:
-        description: Existing reviewed release tag (v0.1.0)
+        description: Existing reviewed release tag
         required: true
-        default: v0.1.0
-        type: string
+        default: v0.1.1
+        type: choice
+        options:
+          - v0.1.1
+          - v0.1.0
 permissions:
   contents: read
 jobs:
@@ -19,7 +22,8 @@ jobs:
       - name: Validate requested version
         shell: pwsh
         run: |
-          if ($env:RELEASE_TAG -cne 'v0.1.0') { throw 'This workflow packages the reviewed v0.1.0 release only.' }
+          if (@('v0.1.0', 'v0.1.1') -cnotcontains $env:RELEASE_TAG) { throw 'This workflow accepts the reviewed v0.1.0 or v0.1.1 release tags only.' }
+          "RELEASE_VERSION=$($env:RELEASE_TAG.Substring(1))" >> $env:GITHUB_ENV
           # Retained upstream license texts have byte-level SHA-256 pins.
           git config --global core.autocrlf false
       - uses: actions/checkout@v4
@@ -27,6 +31,21 @@ jobs:
           ref: ${{ inputs.version_tag }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify exact tagged application version
+        shell: pwsh
+        run: |
+          $commit = (git rev-parse --verify 'HEAD^{commit}').Trim()
+          if ($LASTEXITCODE -ne 0) { throw 'Could not identify the checked out commit.' }
+          $tagCommit = (git rev-parse --verify "refs/tags/$env:RELEASE_TAG`^{commit}").Trim()
+          if ($LASTEXITCODE -ne 0 -or $tagCommit -cne $commit) { throw 'Requested tag must identify this exact checkout.' }
+          $package = Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json
+          $tauri = Get-Content -LiteralPath 'src-tauri/tauri.conf.json' -Raw | ConvertFrom-Json
+          $cargo = Get-Content -LiteralPath 'src-tauri/Cargo.toml' -Raw
+          $cargoPackage = [regex]::Match($cargo, '(?ms)^\[package\]\s*(.*?)(?=^\[|\z)')
+          $cargoVersions = [regex]::Matches($cargoPackage.Groups[1].Value, '(?m)^version\s*=\s*"([^"]+)"\s*$')
+          if ($package.version -cne $env:RELEASE_VERSION -or $tauri.version -cne $env:RELEASE_VERSION -or -not $cargoPackage.Success -or $cargoVersions.Count -ne 1 -or $cargoVersions[0].Groups[1].Value -cne $env:RELEASE_VERSION) {
+            throw 'Application, desktop shell and native engine versions must match the selected release tag.'
+          }
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -75,8 +94,8 @@ jobs:
       - name: Prepare corresponding source archives
         shell: pwsh
         run: |
-          ./scripts/prepare-media.ps1 -SourcesOnly -SourceBundle "$PWD/work/mono-cut-media-source-0.1.0.zip"
-          ./scripts/prepare-app-source.ps1 -Archive "$PWD/work/mono-cut-source-dependencies-0.1.0.zip"
+          ./scripts/prepare-media.ps1 -SourcesOnly -SourceBundle "$PWD/work/mono-cut-media-source-$env:RELEASE_VERSION.zip"
+          ./scripts/prepare-app-source.ps1 -Archive "$PWD/work/mono-cut-source-dependencies-$env:RELEASE_VERSION.zip"
       - name: Package committed source, installer and corresponding source
         shell: pwsh
         run: |
@@ -87,20 +106,52 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Could not restore generated reference provenance.' }
           git diff --exit-code
           if ($LASTEXITCODE -ne 0) { throw 'Unreviewed application source changes prevent release packaging.' }
-          $installer = @(Get-ChildItem -LiteralPath 'src-tauri/target/release/bundle/nsis' -File -Filter '*_0.1.0_x64-setup.exe')
-          if ($installer.Count -ne 1) { throw 'Expected exactly one v0.1.0 Windows x64 installer.' }
-          $mediaSource = "$PWD/work/mono-cut-media-source-0.1.0.zip"
-          $dependencySource = "$PWD/work/mono-cut-source-dependencies-0.1.0.zip"
-          ./scripts/package-release.ps1 -Tag $env:RELEASE_TAG `
+          $installer = @(Get-ChildItem -LiteralPath 'src-tauri/target/release/bundle/nsis' -File -Filter "*_$($env:RELEASE_VERSION)_x64-setup.exe")
+          if ($installer.Count -ne 1) { throw "Expected exactly one $env:RELEASE_TAG Windows x64 installer." }
+          $mediaSource = "$PWD/work/mono-cut-media-source-$env:RELEASE_VERSION.zip"
+          $dependencySource = "$PWD/work/mono-cut-source-dependencies-$env:RELEASE_VERSION.zip"
+          ./scripts/package-release.ps1 -Version $env:RELEASE_VERSION -Tag $env:RELEASE_TAG `
             -InstallerPath $installer[0].FullName -InstallerSha256 (Get-FileHash -LiteralPath $installer[0].FullName -Algorithm SHA256).Hash `
             -MediaSourcePath $mediaSource -MediaSourceSha256 (Get-FileHash -LiteralPath $mediaSource -Algorithm SHA256).Hash `
             -DependencySourcePath $dependencySource -DependencySourceSha256 (Get-FileHash -LiteralPath $dependencySource -Algorithm SHA256).Hash `
             -MediaProvenancePath "$PWD/work/generated-media-provenance.json" `
-            -OutputDirectory "$PWD/work/release/v0.1.0"
+            -OutputDirectory "$PWD/work/release/$env:RELEASE_TAG"
+      - name: Verify prepared release manifests before upload
+        shell: pwsh
+        run: |
+          $release = Join-Path $PWD "work/release/$env:RELEASE_TAG"
+          $expected = @(
+            'BUILD-INFO.json', 'SHA256SUMS.txt',
+            "mono-cut-$env:RELEASE_VERSION-windows-x64-setup.exe",
+            "mono-cut-source-$env:RELEASE_VERSION.zip",
+            "mono-cut-media-source-$env:RELEASE_VERSION.zip",
+            "mono-cut-source-dependencies-$env:RELEASE_VERSION.zip"
+          )
+          $files = @(Get-ChildItem -LiteralPath $release -Force)
+          if ($files.Count -ne 6 -or @($files | Where-Object PSIsContainer).Count -or @(Compare-Object ($expected | Sort-Object) ($files.Name | Sort-Object)).Count) { throw 'Release must contain exactly the six expected installer, source and manifest files.' }
+          $lines = @(Get-Content -LiteralPath (Join-Path $release 'SHA256SUMS.txt'))
+          $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+          foreach ($line in $lines) {
+            if ($line -cnotmatch '^([a-f0-9]{64})  ([A-Za-z0-9._-]+)$') { throw 'Invalid release checksum record.' }
+            $hash, $name = $Matches[1], $Matches[2]
+            if ($name -ceq 'SHA256SUMS.txt' -or $expected -cnotcontains $name -or -not $seen.Add($name)) { throw 'Unexpected or duplicate release checksum member.' }
+            if ((Get-FileHash -LiteralPath (Join-Path $release $name) -Algorithm SHA256).Hash.ToLowerInvariant() -cne $hash) { throw "Release checksum failed: $name" }
+          }
+          if ($seen.Count -ne 5) { throw 'Every release payload requires exactly one checksum.' }
+          $info = Get-Content -LiteralPath (Join-Path $release 'BUILD-INFO.json') -Raw | ConvertFrom-Json
+          $commit = (git rev-parse --verify 'HEAD^{commit}').Trim()
+          if ($LASTEXITCODE -ne 0 -or $info.version -cne $env:RELEASE_VERSION -or $info.tag -cne $env:RELEASE_TAG -or $info.commit -cne $commit) { throw 'Build information differs from the reviewed tagged source.' }
+          if (@($info.artifacts).Count -ne 4) { throw 'Build information must inventory the installer and three source archives.' }
+          $inventory = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+          foreach ($record in $info.artifacts) {
+            if ($record.file -ceq 'BUILD-INFO.json' -or $record.file -ceq 'SHA256SUMS.txt' -or $expected -cnotcontains $record.file -or -not $inventory.Add($record.file)) { throw 'Unexpected or duplicate build information member.' }
+            $file = Get-Item -LiteralPath (Join-Path $release $record.file)
+            if ($file.Length -ne $record.bytes -or (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant() -cne $record.sha256) { throw 'Build information artifact integrity failed.' }
+          }
       - name: Preserve reviewed release artifacts (no publication)
         uses: actions/upload-artifact@v4
         with:
-          name: mono-cut-v0.1.0-windows-x64-release
-          path: work/release/v0.1.0/*
+          name: mono-cut-${{ env.RELEASE_TAG }}-windows-x64-release
+          path: work/release/${{ env.RELEASE_TAG }}/*
           if-no-files-found: error
           retention-days: 90

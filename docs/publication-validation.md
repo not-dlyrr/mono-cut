@@ -49,9 +49,13 @@ initial fitted canvas to even pixels before RGBA conversion and updates the
 preview recipe. Exact geometry assertions remain in place and cover both
 optimized and scalar rendering, including a fractional aspect ratio.
 [Display fit validation](display-fit-validation.md) records the evidence and
-silent local results. The corrected source awaits its full cross-platform CI
-results. The published Windows package and its audited media baseline remain
-unchanged.
+silent local results. The corrected engine at commit
+`c641352d5bc22f55a0a19d721d3cb9a207ebf851` then passed all 54 active Rust tests on
+[Linux](https://github.com/not-dlyrr/mono-cut/actions/runs/37760482289/job/113255410405)
+and [macOS ARM64](https://github.com/not-dlyrr/mono-cut/actions/runs/37760482289/job/113255410075).
+One explicit performance benchmark remains ignored in normal CI. The original
+0.1.0 package and media baseline remain unchanged; Windows 0.1.1 packages the
+corrected renderer, preview recipe and matching release metadata separately.
 
 CI is distinct from a verified native Linux/macOS installer release. The old
 0.1.0 tag/downloads remain intact while the CI preparation follow-up advances

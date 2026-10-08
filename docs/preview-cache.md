@@ -22,7 +22,7 @@ and the versioned preview recipe. Proxy metadata is omitted when proxies are
 disabled. Source/proxy paths and file size, modification time and creation time
 are included, together with the FFmpeg executable and title font when used.
 
-The post-0.1.0 source uses recipe `program-preview-v2` for the even-pixel initial
+Version 0.1.1 uses recipe `program-preview-v2` for the even-pixel initial
 fit correction. Its keys differ from v1, so previously rendered v1 previews
 cannot be reused with the corrected renderer. The published Windows 0.1.0
 installer retains the original v1 recipe.
