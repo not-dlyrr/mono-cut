@@ -1,0 +1,20 @@
+{
+  "name": "mono-cut", "version": "0.1.0", "private": true,
+  "description": "Open-source desktop video editor", "license": "GPL-3.0-or-later",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1", "build": "tsc && vite build",
+    "tauri": "tauri", "desktop": "tauri dev", "desktop:build": "node scripts/build-desktop.mjs",
+    "test:engine": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "test:preview": "node tests/run-preview-tests.mjs",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.8", "@tauri-apps/api": "^2.10.1", "@tauri-apps/plugin-dialog": "^2.6.0",
+    "lucide-react": "^0.468.0", "react": "^19.2.0", "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.10.1", "@types/react": "^19.2.0", "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0", "typescript": "^5.9.3", "vite": "^7.3.1",
+    "playwright-core": "^1.56.0"
+  }
+}

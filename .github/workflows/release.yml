@@ -1,0 +1,105 @@
+name: Prepare reviewed Windows release
+on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: Existing reviewed release tag (v0.1.0)
+        required: true
+        default: v0.1.0
+        type: string
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    env:
+      RELEASE_TAG: ${{ inputs.version_tag }}
+    steps:
+      - name: Validate requested version
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_TAG -cne 'v0.1.0') { throw 'This workflow packages the reviewed v0.1.0 release only.' }
+          # Retained upstream license texts have byte-level SHA-256 pins.
+          git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version_tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install locked interface dependencies
+        run: npm ci
+      - name: Verify exact dependency notices
+        run: node scripts/dependency-notices.mjs
+      - name: Verify interface
+        run: npm run check && npm run test:preview && npm run build
+      - name: Cache pinned media build
+        uses: actions/cache@v4
+        with:
+          path: |
+            work/media-build
+            src-tauri/resources/media
+          key: windows-media-${{ hashFiles('scripts/media-sources.json', 'scripts/build-media.sh') }}
+      - name: Build pinned media components
+        shell: pwsh
+        run: ./scripts/prepare-media.ps1 -Jobs 4
+      - name: Verify bundled media provenance
+        shell: pwsh
+        run: |
+          ./scripts/record-media-provenance.ps1
+          New-Item -ItemType Directory -Path 'work' -Force | Out-Null
+          Copy-Item -LiteralPath 'licenses/media-provenance.json' -Destination 'work/generated-media-provenance.json'
+      - name: Unit and actual-media regression tests
+        shell: pwsh
+        run: |
+          $env:MONO_CUT_FFMPEG = "$PWD/src-tauri/resources/media/ffmpeg.exe"
+          $env:MONO_CUT_FFPROBE = "$PWD/src-tauri/resources/media/ffprobe.exe"
+          $env:MONO_CUT_FONT = "$PWD/src-tauri/resources/media/Inter.ttf"
+          cargo test --locked --manifest-path src-tauri/Cargo.toml -- --nocapture --test-threads=1
+          if ($LASTEXITCODE -ne 0) { throw 'Engine regression tests failed.' }
+          cargo test --locked --manifest-path src-tauri/vendor/webview2-com-sys/Cargo.toml -- --nocapture
+          if ($LASTEXITCODE -ne 0) { throw 'Open Windows loader tests failed.' }
+      - name: Build Windows installer
+        run: npm run desktop:build
+      - name: Verify packaged executable, media and notices without launching
+        run: node scripts/verify-installer.mjs
+      - name: Prepare corresponding source archives
+        shell: pwsh
+        run: |
+          ./scripts/prepare-media.ps1 -SourcesOnly -SourceBundle "$PWD/work/mono-cut-media-source-0.1.0.zip"
+          ./scripts/prepare-app-source.ps1 -Archive "$PWD/work/mono-cut-source-dependencies-0.1.0.zip"
+      - name: Package committed source, installer and corresponding source
+        shell: pwsh
+        run: |
+          # Only these generated records may differ after a fresh media build.
+          # Preserve the measured record in the media ZIP and BUILD-INFO while
+          # git archive retains the exact reviewed tag, including its reference record.
+          git restore -- licenses/media-provenance.json src-tauri/resources/media/provenance.json
+          if ($LASTEXITCODE -ne 0) { throw 'Could not restore generated reference provenance.' }
+          git diff --exit-code
+          if ($LASTEXITCODE -ne 0) { throw 'Unreviewed application source changes prevent release packaging.' }
+          $installer = @(Get-ChildItem -LiteralPath 'src-tauri/target/release/bundle/nsis' -File -Filter '*_0.1.0_x64-setup.exe')
+          if ($installer.Count -ne 1) { throw 'Expected exactly one v0.1.0 Windows x64 installer.' }
+          $mediaSource = "$PWD/work/mono-cut-media-source-0.1.0.zip"
+          $dependencySource = "$PWD/work/mono-cut-source-dependencies-0.1.0.zip"
+          ./scripts/package-release.ps1 -Tag $env:RELEASE_TAG `
+            -InstallerPath $installer[0].FullName -InstallerSha256 (Get-FileHash -LiteralPath $installer[0].FullName -Algorithm SHA256).Hash `
+            -MediaSourcePath $mediaSource -MediaSourceSha256 (Get-FileHash -LiteralPath $mediaSource -Algorithm SHA256).Hash `
+            -DependencySourcePath $dependencySource -DependencySourceSha256 (Get-FileHash -LiteralPath $dependencySource -Algorithm SHA256).Hash `
+            -MediaProvenancePath "$PWD/work/generated-media-provenance.json" `
+            -OutputDirectory "$PWD/work/release/v0.1.0"
+      - name: Preserve reviewed release artifacts (no publication)
+        uses: actions/upload-artifact@v4
+        with:
+          name: mono-cut-v0.1.0-windows-x64-release
+          path: work/release/v0.1.0/*
+          if-no-files-found: error
+          retention-days: 90

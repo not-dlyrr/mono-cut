@@ -1,0 +1,17 @@
+node_modules/
+dist/
+target/
+src-tauri/gen/
+src-tauri/resources/media/*.exe
+src-tauri/resources/media/*.dll
+src-tauri/resources/media/Inter.ttf
+src-tauri/resources/media/sources/
+*.monocut
+*.recovery
+work/
+validation-media/
+test-results/
+.env*
+*.pfx
+*.pem
+*.key

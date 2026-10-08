@@ -1,0 +1,3 @@
+# Preserve exact source, notice and archive-input bytes on every platform.
+# Several corresponding-source records pin SHA-256 hashes of these files.
+* -text
