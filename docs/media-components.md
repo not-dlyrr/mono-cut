@@ -66,6 +66,19 @@ Upstream reference: [FFmpeg licensing](https://ffmpeg.org/legal.html).
 
 The pinned Windows binary has no vendor hardware acceleration interfaces.
 Capability detection reports the installed configuration; CPU software encoding
-is the supported baseline. Linux/macOS development can use a local open-source
-FFmpeg with the equivalent feature set. Such a binary must be separately audited
-with its own configuration, licenses and source before being bundled in a release.
+is the supported baseline. Linux/macOS development and CI build native FFmpeg
+8.1.1 through `scripts/prepare-media-unix.sh`, using the same seven hash-pinned
+source inputs. The Unix recipe retains the GPL/version3, software-only and
+disabled-autodetection/network configuration, with native CPU detection and the
+host C++ runtime in place of the Windows target/linker options. Static media
+libraries use position-independent code; optional HarfBuzz CoreText, GLib and ICU
+integrations are disabled. See the README for platform build prerequisites.
+
+The Unix recipe records configuration and binary/font hashes in its build
+directory's `build-provenance.json`. A warm cache is accepted only when recipe,
+platform, architecture and output hashes match. System builds from older/newer
+major versions are not validated substitutes; the first Unix CI runs exposed
+different frame/filter behavior. New platform binaries still need their own
+configuration, licenses, corresponding source and package/runtime validation
+before being bundled in a release. Adding this recipe does not establish a
+verified Linux/macOS installer release.

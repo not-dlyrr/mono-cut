@@ -15,6 +15,10 @@ for exact capabilities and verified limits.
 [Versioned releases](https://github.com/not-dlyrr/mono-cut/releases) ·
 [Native screenshots](docs/screenshots.md)
 
+The [publication record](docs/publication-validation.md) verifies the public
+0.1.0 links and checksums, and distinguishes subsequent CI work from the tagged
+Windows release.
+
 ## Windows installation
 
 The Windows x64 release assets pair the installer with application, media and
@@ -97,10 +101,28 @@ configuration and checksums. See [media reproduction](docs/media-components.md).
 
 The model, edit commands, renderer and React interface are portable. Install the
 [Tauri platform prerequisites](https://v2.tauri.app/start/prerequisites/), and use
-a system open-source FFmpeg built with x264, FreeType and HarfBuzz. The pinned
-media preparation script targets Windows x64. Linux/macOS compile/unit/media
-test jobs are defined in CI; a platform is not a verified installer release until
-its own runtime/package results are recorded.
+the FFmpeg 8.1.1 baseline built with x264, FreeType and HarfBuzz. Arbitrary older
+or newer system FFmpeg major versions are not validated substitutes. Linux also
+needs `build-essential`, `cmake`, `ninja-build`, `pkg-config`, `nasm`, `curl` and
+`unzip`. On macOS install the Xcode command line tools and Homebrew packages
+`cmake`, `ninja`, `pkg-config` and `nasm`. Node.js 22+ is required on both.
+
+```sh
+npm ci
+bash scripts/prepare-media-unix.sh
+export MONO_CUT_FFMPEG="$PWD/src-tauri/resources/media/ffmpeg"
+export MONO_CUT_FFPROBE="$PWD/src-tauri/resources/media/ffprobe"
+export MONO_CUT_FONT="$PWD/src-tauri/resources/media/Inter.ttf"
+cargo test --locked --manifest-path src-tauri/Cargo.toml
+npm run desktop
+```
+
+The Unix recipe compiles the same hash-pinned upstream versions for the native
+host. An optional build directory and job count can be passed as its first and
+second arguments. Provenance and output hashes are stored in
+`work/media-unix/build-provenance.json` for the default directory. Linux/macOS
+compile/unit/media test jobs are defined in CI; a platform is not a verified
+installer release until its own runtime/package results are recorded.
 
 Engine tests accept `MONO_CUT_FFMPEG`, `MONO_CUT_FFPROBE` and `MONO_CUT_FONT` for
 explicit tool/font paths. The desktop shell resolves bundled resources; native
