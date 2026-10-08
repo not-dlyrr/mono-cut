@@ -1,5 +1,37 @@
 # Public release verification
 
+## Windows 0.1.1
+
+The public 0.1.1 prerelease and all six asset URLs were verified on 2026-10-08
+through unauthenticated HTTP requests, returning HTTP 200. Its exact tagged
+source commit is `bd4047e2555c1be0afaaedafdbe5147ba47138a8`.
+
+- [Windows installer](https://github.com/not-dlyrr/mono-cut/releases/download/v0.1.1/mono-cut-0.1.1-windows-x64-setup.exe)
+- [Release and corresponding source](https://github.com/not-dlyrr/mono-cut/releases/tag/v0.1.1)
+- [Checksums](https://github.com/not-dlyrr/mono-cut/releases/download/v0.1.1/SHA256SUMS.txt)
+- [Package and validation record](release-0.1.1.md)
+
+The downloaded installer, application source, BUILD-INFO and checksum manifest
+were rehashed. All six server SHA-256 digests and sizes match their packaged
+inputs. The two large auxiliary source ZIPs were checked against their server
+digests and public URLs, with their inner inputs/lockfiles verified locally.
+Public tagged App source byte-matches the committed source.
+
+| Asset | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Windows installer | 34,563,781 | `9b68ec666e650ce6861e60fa83a98a5995c3c78128cecf3cd612baf5094e89f7` |
+| Application source | 1,570,730 | `a98d73cfc1b7abf168ade9056c6f39899bea168206de3374fbf1793ad8fd38db` |
+| Media source | 79,579,716 | `f1c9870e2265194e03610d1fcf6cf8eccf3c31e8edbe67cf6772ea966f6bace8` |
+| Dependency source | 131,053,057 | `0393414f2c0d7cd1ef15f83eb61b613dfa27408cf86164ca4c3650536c6b58fd` |
+
+The exact release metadata's [main CI run](https://github.com/not-dlyrr/mono-cut/actions/runs/37763138571)
+was still running at publication. The corrected renderer already passed the
+full Linux/macOS engine suites at the earlier c641352 snapshot, as recorded
+below, and the rebuilt Windows 0.1.1 package passed local static integrity.
+These results do not claim renewed native UI or speaker playback verification.
+
+## Preserved Windows 0.1.0
+
 The public repository and Windows 0.1.0 prerelease were verified on 2026-10-08
 through unauthenticated HTTP requests. The repository is public, the release
 page returns HTTP 200, and all six downloadable asset URLs return HTTP 200.
