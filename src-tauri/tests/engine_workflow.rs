@@ -733,6 +733,76 @@ fn rotated_and_anamorphic_sources_preserve_display_fit_with_proxies() {
                     }
                 }
             }
+            // Keep the geometry expectation unchanged while distinguishing
+            // compositor pixels from architecture-specific RGB conversion.
+            let scalar = media::command(&ctx.ffmpeg)
+                .args(["-v", "error", "-cpuflags", "0", "-i"])
+                .arg(&output)
+                .args(["-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"])
+                .output()
+                .unwrap();
+            assert!(scalar.status.success());
+            assert_eq!(scalar.stdout.len(), pixels.len());
+            let luma = decoded(
+                &ctx,
+                &output,
+                &[
+                    "-frames:v",
+                    "1",
+                    "-vf",
+                    "extractplanes=y",
+                    "-f",
+                    "rawvideo",
+                    "-pix_fmt",
+                    "gray",
+                ],
+            );
+            assert_eq!(luma.len(), 320 * 180);
+            let bounds = |data: &[u8], channels: usize, cutoff: u8| {
+                let mut bx0 = 320usize;
+                let mut bx1 = 0usize;
+                let mut by0 = 180usize;
+                let mut by1 = 0usize;
+                for y in 0..180 {
+                    for x in 0..320 {
+                        let offset = (y * 320 + x) * channels;
+                        if data[offset..offset + channels].iter().all(|v| *v > cutoff) {
+                            bx0 = bx0.min(x);
+                            bx1 = bx1.max(x);
+                            by0 = by0.min(y);
+                            by1 = by1.max(y);
+                        }
+                    }
+                }
+                (bx0 <= bx1 && by0 <= by1)
+                    .then(|| (bx0, bx1, by0, by1, bx1 - bx0 + 1, by1 - by0 + 1))
+            };
+            let cutoffs: Vec<_> = [32u8, 64, 96, 127, 160, 180, 200, 220]
+                .into_iter()
+                .map(|cutoff| {
+                    (
+                        cutoff,
+                        bounds(&pixels, 3, cutoff),
+                        bounds(&scalar.stdout, 3, cutoff),
+                        bounds(&luma, 1, cutoff),
+                    )
+                })
+                .collect();
+            let left: usize = (320 - expected_picture.0) / 2;
+            let right = left + expected_picture.0 - 1;
+            let edges: Vec<_> = (left.saturating_sub(3)..=left + 3)
+                .chain(right.saturating_sub(3)..=(right + 3).min(319))
+                .map(|x| {
+                    let offset = (90 * 320 + x) * 3;
+                    (
+                        x,
+                        &pixels[offset..offset + 3],
+                        &scalar.stdout[offset..offset + 3],
+                        luma[90 * 320 + x],
+                    )
+                })
+                .collect();
+            eprintln!("FIT_DIAGNOSTIC {name} proxy={use_proxy}: thresholds=(cutoff, defaultRGB, scalarRGB, rawY) {cutoffs:?}; midpoint edges=(x, defaultRGB, scalarRGB, rawY) {edges:?}; graph={}", plan.filter_graph);
             assert_eq!(
                 (max_x - min_x + 1, max_y - min_y + 1),
                 expected_picture,

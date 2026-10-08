@@ -47,7 +47,8 @@ jobs:
           path: |
             work/media-build
             src-tauri/resources/media
-          key: windows-media-${{ hashFiles('scripts/media-sources.json', 'scripts/build-media.sh') }}
+            licenses/media-provenance.json
+          key: windows-media-v2-${{ hashFiles('scripts/media-sources.json', 'scripts/build-media.sh', 'scripts/prepare-media.ps1', 'scripts/record-media-provenance.ps1') }}
       - name: Build pinned media components
         shell: pwsh
         run: ./scripts/prepare-media.ps1 -Jobs 4

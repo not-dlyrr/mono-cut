@@ -38,10 +38,25 @@ Those assertions remain strict. Unix development/CI now uses the native source
 build recipe for the audited FFmpeg 8.1.1 baseline; arbitrary system FFmpeg major
 versions are not a validated substitute. Shell syntax, embedded JavaScript,
 workflow structure and early argument/platform guards were checked locally.
-The new native Unix builds and media tests await remote CI results. The Windows
-release already bundles that baseline.
+An initial native archive-name difference was corrected without changing the
+media assertions. Both native Unix media builds then passed. In
+[run 37755934520](https://github.com/not-dlyrr/mono-cut/actions/runs/37755934520),
+Linux passed the full engine/media suite; macOS passed eight workflow checks but
+the portrait-fit check measured a 99-pixel bright footprint where 100 was
+expected. Exact geometry assertions remain in place while decoded-edge
+diagnostics distinguish rendering from pixel conversion. The Windows release
+already bundles the audited media baseline.
 
 CI is distinct from a verified native Linux/macOS installer release. The old
 0.1.0 tag/downloads remain intact while the CI preparation follow-up advances
 main. Local Windows tests and public download verification are not presented as
-successful remote CI or cross-platform native playback evidence.
+cross-platform native playback evidence.
+
+The [tagged Windows job](https://github.com/not-dlyrr/mono-cut/actions/runs/37753520208/job/113232323103)
+completed successfully: interface checks and 28 helper tests, all 54 active
+engine/media tests, seven open-loader tests, installer build, static package
+integrity and artifact upload. The complete tag workflow failed on the original
+Unix system-version mismatch described above. The Windows CI installer is a
+separate build artifact; it does not replace the public release download or its
+checksum. It was checked without launching the editor. Linux's later successful
+engine run likewise does not establish native GUI playback or installer behavior.
